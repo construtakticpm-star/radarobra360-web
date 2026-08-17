@@ -1,0 +1,35 @@
+[build]
+  functions = "netlify/functions"
+  publish = "."
+
+[[redirects]]
+  from = "/app"
+  to = "/.netlify/functions/app"
+  status = 200
+
+[[redirects]]
+  from = "/app/punto"
+  to = "/.netlify/functions/app-punto"
+  status = 200
+
+[[redirects]]
+  from = "/app/registrar"
+  to = "/.netlify/functions/app-registrar"
+  status = 200
+
+[[redirects]]
+  from = "/app/submit"
+  to = "/.netlify/functions/app-submit"
+  status = 200
+
+[[redirects]]
+  from = "/app/media"
+  to = "/.netlify/functions/app-media"
+  status = 200
+
+# Block direct static access to function source.
+[[redirects]]
+  from = "/netlify/*"
+  to = "/404.html"
+  status = 404
+  force = true

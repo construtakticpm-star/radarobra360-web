@@ -113,7 +113,7 @@ exports.handler = async (event) => {
             body: JSON.stringify(payload)
           });
           const body = await res.json().catch(() => ({}));
-          if (!res.ok) throw new Error(body.error || 'Error del servidor');
+          if (!res.ok) throw new Error((body.error || 'Error del servidor') + (body.debug ? ' — ' + body.debug : ''));
           statusEl.className = 'status status--ok';
           statusEl.textContent = '¡Guardado! Redirigiendo...';
           setTimeout(() => { window.location.href = '/app'; }, 700);

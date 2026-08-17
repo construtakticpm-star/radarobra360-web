@@ -52,6 +52,32 @@ textarea{resize:vertical;}
 .status{margin-top:14px;font-size:0.85rem;text-align:center;}
 .status--error{color:#b5453f;}
 .status--ok{color:var(--cyan);}
+
+.plano-toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:18px;}
+.plano-stage{position:relative;background:#000;border-radius:16px;overflow:hidden;line-height:0;cursor:crosshair;user-select:none;}
+.plano-stage img{width:100%;display:block;pointer-events:none;}
+.plano-stage.placing{cursor:cell;}
+.pin{
+  position:absolute;transform:translate(-50%,-100%);
+  display:flex;flex-direction:column;align-items:center;
+  text-decoration:none;color:#fff;
+}
+.pin__dot{
+  width:16px;height:16px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);
+  background:var(--cyan);border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.4);
+}
+.pin__label{
+  margin-top:2px;background:rgba(8,18,33,0.85);color:#fff;font-size:0.68rem;font-weight:700;
+  padding:2px 8px;border-radius:999px;white-space:nowrap;
+}
+.pin-picker{
+  position:fixed;inset:0;background:rgba(8,18,33,0.6);display:flex;align-items:center;justify-content:center;
+  z-index:50;padding:20px;
+}
+.pin-picker__card{background:#fff;border-radius:16px;padding:22px;max-width:360px;width:100%;}
+.pin-picker__card h3{color:var(--navy);margin-bottom:14px;font-size:1.05rem;}
+.unplaced-list{display:flex;flex-direction:column;gap:8px;margin-top:24px;}
+.unplaced-item{background:#fff;border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-size:0.88rem;color:var(--navy);}
 `;
 
 function shell(title, body) {
@@ -74,6 +100,7 @@ function topbar() {
   return `<header class="topbar">
     <a href="/app" class="topbar__brand"><span class="mark">◎</span>RadarObra<span class="n360">360</span></a>
     <div class="topbar__actions">
+      <a href="/app/plano" class="btn btn--ghost">🗺️ Plano</a>
       <a href="/app/registrar" class="btn btn--primary">＋ Registrar</a>
     </div>
   </header>`;

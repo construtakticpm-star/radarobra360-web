@@ -26,7 +26,7 @@ function mediaStore() {
 }
 
 function emptyData() {
-  return { puntos: [] };
+  return { puntos: [], plano: null };
 }
 
 async function getData() {

@@ -27,6 +27,21 @@
   to = "/.netlify/functions/app-media"
   status = 200
 
+[[redirects]]
+  from = "/app/plano"
+  to = "/.netlify/functions/app-plano"
+  status = 200
+
+[[redirects]]
+  from = "/app/plano-upload"
+  to = "/.netlify/functions/app-plano-upload"
+  status = 200
+
+[[redirects]]
+  from = "/app/plano-pin"
+  to = "/.netlify/functions/app-plano-pin"
+  status = 200
+
 # Block direct static access to function source.
 [[redirects]]
   from = "/netlify/*"

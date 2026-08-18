@@ -100,6 +100,7 @@ exports.handler = async (event) => {
   const placed = puntos.filter(p => p.x != null && p.y != null);
   const unplaced = puntos.filter(p => p.x == null || p.y == null);
   const usuarios = data.usuarios || [];
+  const horaCierre = proyecto.horaCierre || "18:00";
 
   // El pin se pinta según si el frente tiene responsable asignado en su
   // registro más reciente, no según su estatus.
@@ -128,8 +129,10 @@ exports.handler = async (event) => {
 
   const pinsHtml = placed.map(p => {
     const legend = responsableLegend(p);
+    const asignado = asignadoDe(p);
     return `
-    <button type="button" class="pin pin--${asignadoDe(p) ? "asignado" : "sin-asignar"}" data-punto-id="${esc(p.id)}" style="left:${p.x}%; top:${p.y}%;" title="${esc(p.nombre)}">
+    <button type="button" class="pin pin--${asignado ? "asignado" : "sin-asignar"}" data-punto-id="${esc(p.id)}" style="left:${p.x}%; top:${p.y}%;" title="${esc(p.nombre)}">
+      ${asignado ? "" : '<span class="pin__ping"></span>'}
       <span class="pin__dot"></span>
       <span class="pin__label">${esc(p.nombre)}</span>
       ${legend ? `<span class="pin__responsable">${esc(legend)}</span>` : ""}
@@ -228,10 +231,17 @@ exports.handler = async (event) => {
           <button type="button" class="btn btn--ghost" id="deleteBtn" style="color:#ff8a75;">🗑️ Eliminar punto</button>
           <button type="button" class="btn btn--ghost" id="replaceBtn">🔄 Reemplazar plano</button>
           <button type="button" class="btn btn--ghost audio-toggle">🔊 Sonido: ON</button>
+          <button type="button" class="btn btn--ghost" id="signalToggleBtn">🛰️ Señal: ON</button>
+          <div class="hora-cierre">
+            <label for="horaCierreInput">Cierre de jornada</label>
+            <input type="time" id="horaCierreInput" value="${esc(horaCierre)}">
+            <button type="button" class="btn btn--ghost btn--small" id="horaCierreSaveBtn">Guardar</button>
+          </div>
           <span class="hint" id="placeHint"></span>
         </div>
         <input type="file" id="replaceInput" accept="image/*" style="display:none;">
         <div class="status" id="replaceStatus"></div>
+        <div class="status" id="horaCierreStatus"></div>
       </div>
 
       <div class="plano-layout">
@@ -278,6 +288,7 @@ exports.handler = async (event) => {
       const PROYECTO_ID = ${JSON.stringify(proyectoId)};
       const PUNTOS_DATA = ${puntosDataJson};
       const USUARIOS_DATA = ${usuariosDataJson};
+      let HORA_CIERRE = ${JSON.stringify(horaCierre)};
       const ESTATUS_LABELS = { pendiente: 'Pendiente', 'en-proceso': 'En proceso', listo: 'Listo' };
 
       const stage = document.getElementById('stage');
@@ -289,6 +300,10 @@ exports.handler = async (event) => {
       const replaceBtn = document.getElementById('replaceBtn');
       const replaceInput = document.getElementById('replaceInput');
       const replaceStatus = document.getElementById('replaceStatus');
+      const signalToggleBtn = document.getElementById('signalToggleBtn');
+      const horaCierreInput = document.getElementById('horaCierreInput');
+      const horaCierreSaveBtn = document.getElementById('horaCierreSaveBtn');
+      const horaCierreStatus = document.getElementById('horaCierreStatus');
 
       const detailEmpty = document.getElementById('detailEmpty');
       const detailContent = document.getElementById('detailContent');
@@ -385,6 +400,80 @@ exports.handler = async (event) => {
           replaceStatus.textContent = err.message || 'No se pudo reemplazar el plano.';
           replaceBtn.disabled = false;
           replaceInput.value = '';
+        }
+      });
+
+      // Señal circular en los pines "sin asignar": se intensifica (más
+      // rápida, más roja) conforme se acerca la hora de cierre de jornada.
+      // El interruptor y su estado se guardan solo en este navegador.
+      const SIGNAL_MUTE_KEY = 'radarobra360_signal_off';
+
+      function signalDisabled() {
+        return localStorage.getItem(SIGNAL_MUTE_KEY) === 'true';
+      }
+
+      function updateSignalToggleUI() {
+        const off = signalDisabled();
+        signalToggleBtn.textContent = off ? '🛰️ Señal: OFF' : '🛰️ Señal: ON';
+        stage.classList.toggle('signal-off', off);
+      }
+
+      signalToggleBtn.addEventListener('click', () => {
+        localStorage.setItem(SIGNAL_MUTE_KEY, signalDisabled() ? 'false' : 'true');
+        updateSignalToggleUI();
+      });
+      updateSignalToggleUI();
+
+      // 0 = recién empezó el día, sin prisa. 1 = ya se llegó (o pasó) la
+      // hora de cierre. Con eso se interpola duración/color del pulso.
+      function urgenciaCierre() {
+        const [h, m] = HORA_CIERRE.split(':').map(Number);
+        const ahora = new Date();
+        const cierre = new Date(ahora);
+        cierre.setHours(h, m, 0, 0);
+        const inicio = new Date(ahora);
+        inicio.setHours(7, 0, 0, 0); // referencia de "arranca la jornada"
+        const total = cierre - inicio;
+        if (total <= 0) return 1;
+        const transcurrido = ahora - inicio;
+        return Math.max(0, Math.min(1, transcurrido / total));
+      }
+
+      function updateSignals() {
+        const u = urgenciaCierre();
+        const duracion = (3.2 - u * 2.2).toFixed(2) + 's'; // 3.2s calmado -> 1s urgente
+        const hue = Math.round(210 - u * 210); // grisáceo -> ámbar -> rojo
+        document.querySelectorAll('.pin--sin-asignar .pin__ping').forEach(ping => {
+          ping.style.animationDuration = duracion;
+          ping.style.background = 'hsla(' + hue + ',75%,55%,0.55)';
+        });
+      }
+      updateSignals();
+      setInterval(updateSignals, 60000);
+
+      horaCierreSaveBtn.addEventListener('click', async () => {
+        const valor = horaCierreInput.value;
+        if (!valor) return;
+        horaCierreSaveBtn.disabled = true;
+        horaCierreStatus.className = 'status';
+        horaCierreStatus.textContent = 'Guardando...';
+        try {
+          const res = await fetch('/app/proyecto-horacierre', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ proyectoId: PROYECTO_ID, horaCierre: valor })
+          });
+          const body = await res.json().catch(() => ({}));
+          if (!res.ok) throw new Error((body.error || 'Error del servidor') + (body.debug ? ' — ' + body.debug : ''));
+          HORA_CIERRE = body.horaCierre;
+          updateSignals();
+          horaCierreStatus.className = 'status status--ok';
+          horaCierreStatus.textContent = 'Hora de cierre guardada.';
+        } catch (err) {
+          horaCierreStatus.className = 'status status--error';
+          horaCierreStatus.textContent = err.message || 'No se pudo guardar.';
+        } finally {
+          horaCierreSaveBtn.disabled = false;
         }
       });
 
@@ -709,12 +798,14 @@ exports.handler = async (event) => {
           existingPinEl.style.top = y + '%';
         } else {
           const pinHtml = '<button type="button" class="pin pin--sin-asignar" data-punto-id="' + escHtml(id) + '" style="left:' + x + '%; top:' + y + '%;" title="' + escHtml(nombre) + '">'
+            + '<span class="pin__ping"></span>'
             + '<span class="pin__dot"></span>'
             + '<span class="pin__label">' + escHtml(nombre) + '</span>'
             + '<span class="pin__responsable">Sin asignar</span>'
             + '</button>';
           stage.insertAdjacentHTML('beforeend', pinHtml);
           attachPinHandler(stage.querySelector('.pin[data-punto-id="' + id + '"]'));
+          updateSignals();
         }
 
         const unplacedBtn = document.querySelector('.unplaced-card [data-punto-id="' + id + '"], .unplaced-card [data-place-existing-id="' + id + '"]');

@@ -1,5 +1,6 @@
 const { checkAuth } = require("./lib/auth");
-const { getData, saveData, findProyecto } = require("./lib/store");
+const { getData, saveData, findProyecto, findUsuario } = require("./lib/store");
+const { addEvento } = require("./lib/eventos");
 
 const ESTATUS_VALIDOS = ["pendiente", "en-proceso", "listo"];
 
@@ -44,8 +45,27 @@ exports.handler = async (event) => {
       return { statusCode: 404, headers: { "Content-Type": "application/json" }, body: JSON.stringify({ error: "Registro no encontrado" }) };
     }
 
+    const prevEstatus = registro.estatus;
+    const prevResponsableId = registro.responsableId || null;
+    const nuevoResponsableId = responsableId || null;
+
     registro.estatus = estatus;
-    registro.responsableId = responsableId || null;
+    registro.responsableId = nuevoResponsableId;
+
+    if (nuevoResponsableId && nuevoResponsableId !== prevResponsableId) {
+      const responsable = findUsuario(data, nuevoResponsableId);
+      addEvento(data, {
+        proyectoId, tipo: "asignacion", puntoId: punto.id, puntoNombre: punto.nombre,
+        responsableId: nuevoResponsableId, responsableNombre: responsable ? responsable.nombre : null
+      });
+    }
+    if (estatus === "listo" && prevEstatus !== "listo") {
+      const responsable = nuevoResponsableId ? findUsuario(data, nuevoResponsableId) : null;
+      addEvento(data, {
+        proyectoId, tipo: "completado", puntoId: punto.id, puntoNombre: punto.nombre,
+        responsableId: nuevoResponsableId, responsableNombre: responsable ? responsable.nombre : null
+      });
+    }
 
     await saveData(data);
   } catch (e) {

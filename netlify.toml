@@ -87,6 +87,16 @@
   to = "/.netlify/functions/app-plano-tag"
   status = 200
 
+[[redirects]]
+  from = "/app/eventos"
+  to = "/.netlify/functions/app-eventos"
+  status = 200
+
+[[redirects]]
+  from = "/app/proyecto-horacierre"
+  to = "/.netlify/functions/app-proyecto-horacierre"
+  status = 200
+
 # Block direct static access to function source.
 [[redirects]]
   from = "/netlify/*"

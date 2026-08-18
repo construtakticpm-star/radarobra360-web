@@ -65,6 +65,13 @@ p.lead{color:var(--muted);margin-bottom:28px;border-left:3px solid var(--border)
 .empty{background:#fff;border:1px dashed var(--border);border-radius:14px;padding:40px;text-align:center;color:var(--muted);}
 .empty a{color:var(--cyan);font-weight:700;text-decoration:none;}
 
+.evento-row{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--border);font-size:0.85rem;color:var(--ink);}
+.evento-row:last-child{border-bottom:none;}
+.evento-row__icon{flex-shrink:0;}
+.alert-banner-list{display:flex;flex-direction:column;gap:8px;}
+.alert-banner{background:#fdeceb;border:1px solid #e8a89e;color:#a13a2e;border-radius:10px;padding:10px 14px;font-size:0.85rem;}
+.alert-banner__meta{color:#8a6b0f;font-weight:600;}
+
 .registro{position:relative;background:#fff;border:2px solid var(--border);border-radius:14px;padding:20px;margin-bottom:18px;box-shadow:0 3px 0 rgba(0,0,0,0.1);}
 .registro__head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;flex-wrap:wrap;gap:8px;}
 .registro__fecha{font-weight:800;color:var(--navy);}
@@ -150,6 +157,16 @@ textarea{resize:vertical;}
   width:14px;height:14px;border-radius:50%;
   background:#8a939c;border:2px solid var(--cream);box-shadow:0 2px 6px rgba(0,0,0,0.5);
 }
+.pin__ping{
+  position:absolute;left:50%;top:7px;width:14px;height:14px;margin-left:-7px;margin-top:-7px;
+  border-radius:50%;background:hsla(210,75%,55%,0.55);
+  animation:pin-signal 3.2s ease-out infinite;pointer-events:none;
+}
+@keyframes pin-signal{0%{transform:scale(1);opacity:0.75;}100%{transform:scale(3.4);opacity:0;}}
+.plano-stage.signal-off .pin__ping{display:none;}
+.hora-cierre{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.25);border-radius:10px;padding:5px 10px;}
+.hora-cierre label{margin:0;padding:0;border:none;color:rgba(255,255,255,0.7);font-size:0.68rem;font-weight:600;}
+.hora-cierre input[type="time"]{width:auto;padding:4px 6px;font-size:0.78rem;border-radius:6px;}
 .pin__label{
   margin-top:2px;background:rgba(13,22,34,0.85);color:#fff;font-size:0.68rem;font-weight:700;
   padding:2px 8px;border-radius:8px;white-space:nowrap;
@@ -256,6 +273,7 @@ function topbar(proyectoId, proyectoNombre) {
     ? `<a href="/app${q}" class="btn btn--ghost">⬅ Panel principal</a>
        <a href="/app" class="btn btn--ghost">📁 Proyectos</a>
        <a href="/app/plano${q}" class="btn btn--ghost">📡 RadarObra360</a>
+       <a href="/app/eventos${q}" class="btn btn--ghost">🕐 Hoy</a>
        <a href="/app/registrar${q}" class="btn btn--primary">＋ Registrar</a>`
     : "";
   return `<header class="topbar">

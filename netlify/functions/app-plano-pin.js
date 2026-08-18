@@ -39,7 +39,7 @@ exports.handler = async (event) => {
       const id = slugify(nombre);
       punto = proyecto.puntos.find(p => p.id === id);
       if (!punto) {
-        punto = { id, nombre, registros: [] };
+        punto = { id, nombre, registros: [], creadoEn: new Date().toISOString() };
         proyecto.puntos.unshift(punto);
       }
     }

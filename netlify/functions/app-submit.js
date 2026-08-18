@@ -1,6 +1,7 @@
 const crypto = require("crypto");
 const { checkAuth } = require("./lib/auth");
-const { getData, saveData, saveMedia, findProyecto, slugify } = require("./lib/store");
+const { getData, saveData, saveMedia, findProyecto, findUsuario, slugify } = require("./lib/store");
+const { addEvento } = require("./lib/eventos");
 
 const MAX_TOTAL_BYTES = 4.7 * 1024 * 1024; // ~3.5MB raw inflates ~33% as base64
 const ESTATUS_VALIDOS = ["pendiente", "en-proceso", "listo"];
@@ -62,10 +63,25 @@ exports.handler = async (event) => {
     const puntoId = slugify(punto);
     let puntoObj = proyecto.puntos.find(p => p.id === puntoId);
     if (!puntoObj) {
-      puntoObj = { id: puntoId, nombre: punto, registros: [] };
+      puntoObj = { id: puntoId, nombre: punto, registros: [], creadoEn: new Date().toISOString() };
       proyecto.puntos.unshift(puntoObj);
     }
     puntoObj.registros = [registro, ...(puntoObj.registros || [])];
+
+    if (registro.responsableId) {
+      const responsable = findUsuario(data, registro.responsableId);
+      addEvento(data, {
+        proyectoId, tipo: "asignacion", puntoId: puntoObj.id, puntoNombre: puntoObj.nombre,
+        responsableId: registro.responsableId, responsableNombre: responsable ? responsable.nombre : null
+      });
+    }
+    if (registro.estatus === "listo") {
+      const responsable = registro.responsableId ? findUsuario(data, registro.responsableId) : null;
+      addEvento(data, {
+        proyectoId, tipo: "completado", puntoId: puntoObj.id, puntoNombre: puntoObj.nombre,
+        responsableId: registro.responsableId, responsableNombre: responsable ? responsable.nombre : null
+      });
+    }
 
     await saveData(data);
   } catch (e) {

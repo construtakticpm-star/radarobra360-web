@@ -26,7 +26,7 @@ function mediaStore() {
 }
 
 function emptyData() {
-  return { proyectos: [], usuarios: [], sugerencias: [] };
+  return { proyectos: [], usuarios: [], sugerencias: [], eventos: [] };
 }
 
 function slugify(str) {
@@ -47,6 +47,7 @@ async function getData() {
         let changed = false;
         if (!Array.isArray(existing.usuarios)) { existing.usuarios = []; changed = true; }
         if (!Array.isArray(existing.sugerencias)) { existing.sugerencias = []; changed = true; }
+        if (!Array.isArray(existing.eventos)) { existing.eventos = []; changed = true; }
         if (changed) await saveData(existing);
         return existing;
       }
@@ -61,7 +62,8 @@ async function getData() {
           plano: existing.plano || null
         }],
         usuarios: [],
-        sugerencias: []
+        sugerencias: [],
+        eventos: []
       };
       await saveData(migrated);
       return migrated;

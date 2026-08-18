@@ -131,7 +131,8 @@ textarea{resize:vertical;}
 }
 .control-console::before{top:-4px;left:-4px;border-top:4px solid var(--cyan);border-left:4px solid var(--cyan);border-radius:6px 0 0 0;}
 .control-console::after{bottom:-4px;right:-4px;border-bottom:4px solid var(--cyan);border-right:4px solid var(--cyan);border-radius:0 0 6px 0;}
-.control-console h1{color:#fff;text-shadow:0 0 18px rgba(15,155,142,0.45);}
+.control-console h1{color:#fff;font-family:var(--font);font-weight:600;letter-spacing:0.01em;text-shadow:none;border-bottom-width:2px;}
+.control-console .eyebrow{font-family:var(--font);font-weight:600;letter-spacing:0.01em;border-width:1px;}
 .control-console p.lead{color:rgba(255,255,255,0.72);border-left-color:rgba(255,255,255,0.3);margin-bottom:18px;}
 .control-console .hint{color:rgba(255,255,255,0.55);}
 .control-console .status{color:rgba(255,255,255,0.85);}

@@ -74,6 +74,7 @@ textarea{resize:vertical;}
   padding:2px 8px;border-radius:999px;white-space:nowrap;
 }
 .plano-stage.moving{cursor:cell;}
+.plano-stage.removing{cursor:not-allowed;}
 .pin--moving .pin__dot{background:#fff;box-shadow:0 0 0 4px rgba(14,165,233,0.55),0 2px 6px rgba(0,0,0,0.4);animation:pin-pulse 1s ease-in-out infinite;}
 .pin--moving .pin__label{background:var(--cyan);color:#04141f;}
 @keyframes pin-pulse{0%,100%{transform:rotate(-45deg) scale(1);}50%{transform:rotate(-45deg) scale(1.3);}}

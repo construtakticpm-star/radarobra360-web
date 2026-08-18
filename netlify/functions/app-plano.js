@@ -112,6 +112,7 @@ exports.handler = async (event) => {
       <div class="plano-toolbar">
         <button class="btn btn--primary" id="placeBtn">📍 Colocar punto</button>
         <button type="button" class="btn btn--ghost" id="moveBtn" style="color:var(--navy); border-color:var(--border);">↔️ Mover punto</button>
+        <button type="button" class="btn btn--ghost" id="deleteBtn" style="color:#b5453f; border-color:var(--border);">🗑️ Eliminar punto</button>
         <button type="button" class="btn btn--ghost" id="replaceBtn" style="color:var(--navy); border-color:var(--border);">🔄 Reemplazar plano</button>
         <span class="hint" id="placeHint"></span>
       </div>
@@ -164,6 +165,7 @@ exports.handler = async (event) => {
       const placeBtn = document.getElementById('placeBtn');
       const placeHint = document.getElementById('placeHint');
       const moveBtn = document.getElementById('moveBtn');
+      const deleteBtn = document.getElementById('deleteBtn');
       const replaceBtn = document.getElementById('replaceBtn');
       const replaceInput = document.getElementById('replaceInput');
       const replaceStatus = document.getElementById('replaceStatus');
@@ -323,6 +325,7 @@ exports.handler = async (event) => {
       let pendingCoords = null;
       let moving = false;
       let movingPuntoId = null;
+      let removing = false;
 
       function exitMoveMode() {
         moving = false;
@@ -336,8 +339,14 @@ exports.handler = async (event) => {
         stage.classList.remove('placing');
       }
 
+      function exitRemoveMode() {
+        removing = false;
+        stage.classList.remove('removing');
+      }
+
       placeBtn.addEventListener('click', () => {
         exitMoveMode();
+        exitRemoveMode();
         placing = !placing;
         stage.classList.toggle('placing', placing);
         placeHint.textContent = placing ? 'Ahora haz click sobre el plano.' : '';
@@ -345,6 +354,7 @@ exports.handler = async (event) => {
 
       moveBtn.addEventListener('click', () => {
         exitPlaceMode();
+        exitRemoveMode();
         moving = !moving;
         movingPuntoId = null;
         stage.classList.toggle('moving', moving);
@@ -352,9 +362,39 @@ exports.handler = async (event) => {
         placeHint.textContent = moving ? 'Modo mover: haz click en el punto que quieres reubicar.' : '';
       });
 
+      deleteBtn.addEventListener('click', () => {
+        exitPlaceMode();
+        exitMoveMode();
+        removing = !removing;
+        stage.classList.toggle('removing', removing);
+        placeHint.textContent = removing ? 'Modo eliminar: haz click en el pin que quieres quitar del mapa.' : '';
+      });
+
       document.querySelectorAll('.pin').forEach(el => {
-        el.addEventListener('click', (e) => {
+        el.addEventListener('click', async (e) => {
           e.stopPropagation();
+
+          if (removing) {
+            const puntoId = el.dataset.puntoId;
+            const nombre = el.title || puntoId;
+            const ok = confirm('¿Quitar "' + nombre + '" del plano? Sus fotos y registros se conservan — vuelve a la lista de "sin ubicar" y puedes colocarlo de nuevo cuando quieras.');
+            if (!ok) return;
+            placeHint.textContent = 'Quitando del mapa...';
+            try {
+              const res = await fetch('/app/plano-unpin', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ puntoId })
+              });
+              const body = await res.json().catch(() => ({}));
+              if (!res.ok) throw new Error((body.error || 'Error del servidor') + (body.debug ? ' — ' + body.debug : ''));
+              window.location.reload();
+            } catch (err) {
+              placeHint.textContent = err.message || 'No se pudo quitar el punto.';
+            }
+            return;
+          }
+
           if (moving) {
             if (movingPuntoId === el.dataset.puntoId) {
               movingPuntoId = null;

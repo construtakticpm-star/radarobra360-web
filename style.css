@@ -99,6 +99,8 @@ a{color:inherit;}
 .section__lead{font-size:1.05rem;color:var(--navy);font-weight:600;margin-bottom:16px;}
 .section__closing{color:var(--muted);margin-top:18px;}
 
+.differentiator{max-width:640px;margin:0 auto;padding:5vh 5vw;text-align:center;font-size:1.2rem;font-weight:800;color:var(--navy);}
+
 .check-list{list-style:none;padding:0;display:grid;gap:12px;margin:20px 0;}
 .check-list li{padding:14px 18px;background:#fff;border:1px solid var(--border);border-radius:10px;color:var(--navy);font-weight:500;}
 .section--alt .check-list li{background:var(--cream);}

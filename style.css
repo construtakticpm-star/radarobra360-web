@@ -1,12 +1,12 @@
 :root{
-  --navy:#2b3018;
-  --navy-deep:#14150c;
+  --navy:#1b2a41;
+  --navy-deep:#0d1622;
   --cyan:#e8590c;
   --amber:#c9a227;
-  --cream:#e4dfc4;
-  --ink:#1e1f16;
-  --muted:#6b6b52;
-  --border:#c7c0a0;
+  --cream:#c2ccd6;
+  --ink:#182430;
+  --muted:#5a6774;
+  --border:#a9b7c2;
   --font: "Oswald", "Segoe UI", system-ui, -apple-system, sans-serif;
 }
 
@@ -86,8 +86,8 @@ a{color:inherit;}
   font-size:0.68rem;font-weight:700;color:rgba(255,255,255,0.85);opacity:0.55;
 }
 .photo-chip--1{background:linear-gradient(160deg,#1c3652,#0f2438);}
-.photo-chip--2{background:linear-gradient(160deg,#1c4552,#0f3038);}
-.photo-chip--3{background:linear-gradient(160deg,#1c5252,#0f3838);}
+.photo-chip--2{background:linear-gradient(160deg,#1e3d5c,#102942);}
+.photo-chip--3{background:linear-gradient(160deg,#20456b,#122e4c);}
 .photo-chip--4{background:linear-gradient(160deg,#e8590c,#a83f08);}
 .photo-chip--active{opacity:1;box-shadow:0 0 0 2px var(--cyan);}
 .timeline-card__caption{font-size:0.78rem;color:rgba(255,255,255,0.6);}

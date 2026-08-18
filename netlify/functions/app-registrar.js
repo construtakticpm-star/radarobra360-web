@@ -31,14 +31,18 @@ exports.handler = async (event) => {
       <a class="back" href="/app?proyecto=${esc(proyectoId)}">← Volver</a>
       <div class="card">
         <p class="eyebrow">Nuevo registro</p>
-        <h1>Registrar avance</h1>
-        <p class="hint" style="margin-bottom:10px;">Fotos y video quedan organizados por punto y fecha. Peso combinado máximo recomendado: ~3.5&nbsp;MB por registro (limitación técnica actual).</p>
+        <h1>${puntoPrefill ? "Fotos y video" : "Registrar avance"}</h1>
+        ${puntoPrefill
+          ? `<p class="hint" style="margin-bottom:10px;">📍 Frente: <strong>${esc(puntoPrefill)}</strong></p>`
+          : `<p class="hint" style="margin-bottom:10px;">Fotos y video quedan organizados por punto y fecha. Peso combinado máximo recomendado: ~3.5&nbsp;MB por registro (limitación técnica actual).</p>`}
 
         <form id="f">
-          <label for="punto">Punto / frente</label>
-          <input type="text" id="punto" list="puntos-list" required placeholder="Ej. Cimentación, Fachada Norte..." value="${esc(puntoPrefill)}">
+          ${puntoPrefill
+            ? `<input type="hidden" id="punto" value="${esc(puntoPrefill)}">`
+            : `<label for="punto">Punto / frente</label>
+          <input type="text" id="punto" list="puntos-list" required placeholder="Ej. Cimentación, Fachada Norte...">
           <datalist id="puntos-list">${puntosOptions}</datalist>
-          <div class="hint">Si ya existe, se agrega ahí. Si es nuevo, se crea.</div>
+          <div class="hint">Si ya existe, se agrega ahí. Si es nuevo, se crea.</div>`}
 
           <label for="fecha">Fecha</label>
           <input type="date" id="fecha" value="${today}" required>
@@ -162,6 +166,6 @@ exports.handler = async (event) => {
   return {
     statusCode: 200,
     headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store, private", "X-Robots-Tag": "noindex, nofollow" },
-    body: shell("Registrar avance", body)
+    body: shell(puntoPrefill ? "Fotos y video — " + puntoPrefill : "Registrar avance", body)
   };
 };

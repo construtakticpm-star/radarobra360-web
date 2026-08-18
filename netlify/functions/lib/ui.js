@@ -103,6 +103,7 @@ textarea{resize:vertical;}
   position:absolute;transform:translate(-50%,-100%);
   display:flex;flex-direction:column;align-items:center;
   text-decoration:none;color:#fff;
+  background:none;border:none;padding:0;cursor:pointer;
 }
 .pin__dot{
   width:16px;height:16px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);

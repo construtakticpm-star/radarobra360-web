@@ -106,17 +106,22 @@ exports.handler = async (event) => {
     return (ultimo && ultimo.estatus) || "pendiente";
   }
 
-  // Leyenda de responsable bajo el pin: solo cuando el frente está "en
-  // proceso" (muestra el nombre) o no tiene responsable asignado (muestra
-  // "Sin asignar"). Un frente "pendiente" con responsable ya asignado no
-  // necesita leyenda todavía.
+  // Leyenda de responsable bajo el pin: todos los responsables distintos
+  // que hayan sido asignados en cualquiera de los registros del frente
+  // (no solo el más reciente), del más nuevo al más antiguo. "Sin
+  // asignar" si ningún registro tiene responsable.
   function responsableLegend(p) {
-    const ultimo = p.registros && p.registros[0];
-    const est = (ultimo && ultimo.estatus) || "pendiente";
-    const responsable = ultimo && ultimo.responsableId ? usuarios.find(u => u.id === ultimo.responsableId) : null;
-    if (!responsable) return "Sin asignar";
-    if (est === "en-proceso") return responsable.nombre;
-    return null;
+    const nombres = [];
+    const vistos = new Set();
+    (p.registros || []).forEach(r => {
+      if (!r.responsableId || vistos.has(r.responsableId)) return;
+      const responsable = usuarios.find(u => u.id === r.responsableId);
+      if (responsable) {
+        vistos.add(r.responsableId);
+        nombres.push(responsable.nombre);
+      }
+    });
+    return nombres.length ? nombres.join(", ") : "Sin asignar";
   }
 
   const pinsHtml = placed.map(p => {

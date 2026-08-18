@@ -33,6 +33,7 @@ exports.handler = async (event) => {
   }
 
   const registro = {
+    id: crypto.randomUUID(),
     fecha,
     nota: nota || "",
     estatus: ESTATUS_VALIDOS.includes(estatus) ? estatus : "pendiente",

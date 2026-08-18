@@ -4,6 +4,18 @@ const { esc, shell, topbar, lightboxMarkup, lightboxScript } = require("./lib/ui
 
 const ESTATUS_LABELS = { pendiente: "Pendiente", "en-proceso": "En proceso", listo: "Listo" };
 
+function estatusOptionsHtml(selected) {
+  return Object.keys(ESTATUS_LABELS).map(v =>
+    `<option value="${v}"${v === selected ? " selected" : ""}>${ESTATUS_LABELS[v]}</option>`
+  ).join("");
+}
+
+function responsableOptionsHtml(usuarios, selectedId) {
+  return `<option value="">— Sin asignar —</option>` + usuarios.map(u =>
+    `<option value="${esc(u.id)}"${u.id === selectedId ? " selected" : ""}>${esc(u.nombre)}</option>`
+  ).join("");
+}
+
 function renderMedia(reg) {
   const fotos = (reg.fotos || [])
     .map(id => `
@@ -54,7 +66,7 @@ exports.handler = async (event) => {
   const usuarios = data.usuarios || [];
   const registros = punto.registros || [];
   const registrosHtml = registros.length
-    ? registros.map(r => {
+    ? registros.map((r, idx) => {
         const estatus = r.estatus || "pendiente";
         const responsable = r.responsableId ? usuarios.find(u => u.id === r.responsableId) : null;
         const notifyBtn = estatus === "listo"
@@ -66,6 +78,14 @@ exports.handler = async (event) => {
           <span class="registro__fecha">${esc(r.fecha)}</span>
           <span class="registro__estatus registro__estatus--${estatus}">${esc(ESTATUS_LABELS[estatus] || estatus)}</span>
           ${responsable ? `<span class="registro__responsable">👤 ${esc(responsable.nombre)}</span>` : ""}
+          <button type="button" class="linklike registro__edit-toggle" title="Cambiar estatus/responsable de este registro">✏️</button>
+        </div>
+        <div class="registro__edit" style="display:none;">
+          <select class="registro__edit-estatus">${estatusOptionsHtml(estatus)}</select>
+          <select class="registro__edit-responsable">${responsableOptionsHtml(usuarios, r.responsableId || "")}</select>
+          <button type="button" class="btn btn--primary btn--small registro__edit-save" data-registro-id="${esc(r.id || "")}" data-registro-index="${idx}">Guardar</button>
+          <button type="button" class="btn btn--ghost btn--small registro__edit-cancel" style="color:var(--navy); border-color:var(--border);">Cancelar</button>
+          <span class="status registro__edit-status"></span>
         </div>
         ${r.nota ? `<p class="registro__nota">${esc(r.nota)}</p>` : ""}
         <div class="registro__media">${renderMedia(r)}</div>
@@ -146,6 +166,52 @@ exports.handler = async (event) => {
           const texto = btn.dataset.nombre + ' — ' + btn.dataset.fecha + ' quedó en estatus Listo. ' + window.location.href;
           const base = numero ? 'https://wa.me/' + numero : 'https://wa.me/';
           window.open(base + '?text=' + encodeURIComponent(texto), '_blank');
+        });
+      });
+
+      document.querySelectorAll('.registro__edit-toggle').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const form = btn.closest('.registro').querySelector('.registro__edit');
+          form.style.display = form.style.display === 'none' ? 'flex' : 'none';
+        });
+      });
+
+      document.querySelectorAll('.registro__edit-cancel').forEach(btn => {
+        btn.addEventListener('click', () => {
+          btn.closest('.registro__edit').style.display = 'none';
+        });
+      });
+
+      document.querySelectorAll('.registro__edit-save').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const form = btn.closest('.registro__edit');
+          const statusEl = form.querySelector('.registro__edit-status');
+          const estatus = form.querySelector('.registro__edit-estatus').value;
+          const responsableId = form.querySelector('.registro__edit-responsable').value || null;
+          btn.disabled = true;
+          statusEl.className = 'status registro__edit-status';
+          statusEl.textContent = 'Guardando...';
+          try {
+            const res = await fetch('/app/registro-editar', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                proyectoId: PROYECTO_ID,
+                puntoId: PUNTO_ID,
+                registroId: btn.dataset.registroId || null,
+                registroIndex: Number(btn.dataset.registroIndex),
+                estatus,
+                responsableId
+              })
+            });
+            const body = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error((body.error || 'Error del servidor') + (body.debug ? ' — ' + body.debug : ''));
+            window.location.reload();
+          } catch (err) {
+            statusEl.className = 'status status--error registro__edit-status';
+            statusEl.textContent = err.message || 'No se pudo guardar.';
+            btn.disabled = false;
+          }
         });
       });
     </script>

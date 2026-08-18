@@ -120,8 +120,6 @@ exports.handler = async (event) => {
       ${unplaced.map(p => `<div class="unplaced-item">${esc(p.nombre)} — <button type="button" class="linklike" data-punto-id="${esc(p.id)}">ver fotos</button></div>`).join("")}
     </div>` : "";
 
-  const responsableOptionsHtml = usuarios.map(u => `<option value="${esc(u.id)}">${esc(u.nombre)}</option>`).join("");
-
   // Full punto data (incl. registros/fotos/video ids) embedded so clicking a
   // pin renders instantly, no extra round trip to fetch each punto.
   // `<` is escaped to < so a nota/nombre containing "</script>" can't
@@ -174,20 +172,6 @@ exports.handler = async (event) => {
               </div>
             </div>
             <p class="plano-detail__responsable" id="detailResponsable"></p>
-
-            <div class="quick-estatus">
-              <select id="quickEstatus">
-                <option value="pendiente">Pendiente</option>
-                <option value="en-proceso">En proceso</option>
-                <option value="listo">Listo</option>
-              </select>
-              <select id="quickResponsable">
-                <option value="">— Sin asignar —</option>
-                ${responsableOptionsHtml}
-              </select>
-              <button type="button" class="btn btn--primary btn--small" id="quickEstatusSave">Guardar estatus</button>
-              <span class="status" id="quickEstatusStatus"></span>
-            </div>
 
             <div id="detailRegistros"></div>
           </div>
@@ -245,43 +229,7 @@ exports.handler = async (event) => {
       const detailRegistros = document.getElementById('detailRegistros');
       const exportBtn = document.getElementById('exportBtn');
       const shareBtn = document.getElementById('shareBtn');
-      const quickEstatus = document.getElementById('quickEstatus');
-      const quickResponsable = document.getElementById('quickResponsable');
-      const quickEstatusSave = document.getElementById('quickEstatusSave');
-      const quickEstatusStatus = document.getElementById('quickEstatusStatus');
       let currentPuntoId = null;
-
-      quickEstatusSave.addEventListener('click', async () => {
-        if (!currentPuntoId) return;
-        const punto = PUNTOS_DATA.find(p => p.id === currentPuntoId);
-        if (!punto) return;
-        quickEstatusSave.disabled = true;
-        quickEstatusStatus.className = 'status';
-        quickEstatusStatus.textContent = 'Guardando...';
-        try {
-          const res = await fetch('/app/submit', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              proyectoId: PROYECTO_ID,
-              punto: punto.nombre,
-              fecha: new Date().toISOString().slice(0, 10),
-              nota: '',
-              estatus: quickEstatus.value,
-              responsableId: quickResponsable.value || null,
-              fotos: [],
-              video: null
-            })
-          });
-          const body = await res.json().catch(() => ({}));
-          if (!res.ok) throw new Error((body.error || 'Error del servidor') + (body.debug ? ' — ' + body.debug : ''));
-          window.location.href = '/app/plano?proyecto=' + encodeURIComponent(PROYECTO_ID);
-        } catch (err) {
-          quickEstatusStatus.className = 'status status--error';
-          quickEstatusStatus.textContent = err.message || 'No se pudo guardar.';
-          quickEstatusSave.disabled = false;
-        }
-      });
 
       exportBtn.addEventListener('click', () => window.print());
       shareBtn.addEventListener('click', () => {
@@ -381,7 +329,19 @@ exports.handler = async (event) => {
         return registros.reduce((sum, r) => sum + (r.fotos ? r.fotos.length : 0) + (r.video ? 1 : 0), 0);
       }
 
-      function renderRegistros(registros, puntoNombre) {
+      function estatusOptionsHtml(selected) {
+        return ['pendiente', 'en-proceso', 'listo'].map(v =>
+          '<option value="' + v + '"' + (v === selected ? ' selected' : '') + '>' + ESTATUS_LABELS[v] + '</option>'
+        ).join('');
+      }
+
+      function responsableOptionsHtml(selectedId) {
+        return '<option value="">— Sin asignar —</option>' + USUARIOS_DATA.map(u =>
+          '<option value="' + u.id + '"' + (u.id === selectedId ? ' selected' : '') + '>' + escHtml(u.nombre) + '</option>'
+        ).join('');
+      }
+
+      function renderRegistros(registros, punto) {
         return registros.map(r => {
           const fotos = (r.fotos || []).map(id => mediaTag(id, false)).join('');
           const video = r.video ? mediaTag(r.video, true) : '';
@@ -389,14 +349,25 @@ exports.handler = async (event) => {
           const responsable = r.responsableId ? USUARIOS_DATA.find(u => u.id === r.responsableId) : null;
           const fecha = escHtml(r.fecha);
           const nota = escHtml(r.nota || '');
+          const registroIndex = punto.registros.indexOf(r);
+          const registroId = r.id || '';
           const notifyBtn = estatus === 'listo'
-            ? '<button type="button" class="btn btn--ghost btn--small registro__notify" data-whatsapp="' + (responsable ? escHtml(responsable.whatsapp) : '') + '" data-nombre="' + escHtml(puntoNombre) + '" data-fecha="' + fecha + '" style="color:var(--navy); border-color:var(--border);">📲 Notificar' + (responsable ? ' a ' + escHtml(responsable.nombre) : '') + '</button>'
+            ? '<button type="button" class="btn btn--ghost btn--small registro__notify" data-whatsapp="' + (responsable ? escHtml(responsable.whatsapp) : '') + '" data-nombre="' + escHtml(punto.nombre) + '" data-fecha="' + fecha + '" style="color:var(--navy); border-color:var(--border);">📲 Notificar' + (responsable ? ' a ' + escHtml(responsable.nombre) : '') + '</button>'
             : '';
+          const editForm = '<div class="registro__edit" style="display:none;">'
+            + '<select class="registro__edit-estatus">' + estatusOptionsHtml(estatus) + '</select>'
+            + '<select class="registro__edit-responsable">' + responsableOptionsHtml(r.responsableId || '') + '</select>'
+            + '<button type="button" class="btn btn--primary btn--small registro__edit-save" data-punto-id="' + escHtml(punto.id) + '" data-registro-id="' + escHtml(registroId) + '" data-registro-index="' + registroIndex + '">Guardar</button>'
+            + '<button type="button" class="btn btn--ghost btn--small registro__edit-cancel" style="color:var(--navy); border-color:var(--border);">Cancelar</button>'
+            + '<span class="status registro__edit-status"></span>'
+            + '</div>';
           return '<div class="registro">'
             + '<div class="registro__head"><span class="registro__fecha">' + fecha + '</span>'
             + '<span class="registro__estatus registro__estatus--' + estatus + '">' + (ESTATUS_LABELS[estatus] || estatus) + '</span>'
             + (responsable ? '<span class="registro__responsable">👤 ' + escHtml(responsable.nombre) + '</span>' : '')
+            + '<button type="button" class="linklike registro__edit-toggle" title="Cambiar estatus/responsable de este registro">✏️</button>'
             + '</div>'
+            + editForm
             + (nota ? '<p class="registro__nota">' + nota + '</p>' : '')
             + '<div class="registro__media">' + fotos + video + '</div>'
             + notifyBtn
@@ -426,9 +397,6 @@ exports.handler = async (event) => {
 
         const responsableActual = punto.responsableActualId ? USUARIOS_DATA.find(u => u.id === punto.responsableActualId) : null;
         detailResponsable.textContent = responsableActual ? '👤 ' + responsableActual.nombre : 'Abierto';
-        quickEstatus.value = punto.estatusActual || 'pendiente';
-        quickResponsable.value = punto.responsableActualId || '';
-        quickEstatusStatus.textContent = '';
 
         if (!punto.registros.length) {
           detailRegistros.innerHTML = '<div class="empty">Sin registros todavía. <a href="' + detailAddLink.href + '" style="color:var(--cyan);">Agregar el primero</a></div>';
@@ -448,7 +416,7 @@ exports.handler = async (event) => {
               + '</button>';
           }).join('') + '</div>';
 
-          detailRegistros.innerHTML = barsHtml + '<div id="weekRegistros">' + renderRegistros(current.registros, punto.nombre) + '</div>';
+          detailRegistros.innerHTML = barsHtml + '<div id="weekRegistros">' + renderRegistros(current.registros, punto) + '</div>';
 
           detailRegistros.querySelectorAll('.week-bar').forEach(btn => {
             btn.addEventListener('click', () => {
@@ -500,6 +468,52 @@ exports.handler = async (event) => {
               const texto = btn.dataset.nombre + ' — ' + btn.dataset.fecha + ' quedó en estatus Listo. ' + window.location.href;
               const base = numero ? 'https://wa.me/' + numero : 'https://wa.me/';
               window.open(base + '?text=' + encodeURIComponent(texto), '_blank');
+            });
+          });
+
+          detailRegistros.querySelectorAll('.registro__edit-toggle').forEach(btn => {
+            btn.addEventListener('click', () => {
+              const form = btn.closest('.registro').querySelector('.registro__edit');
+              form.style.display = form.style.display === 'none' ? 'flex' : 'none';
+            });
+          });
+
+          detailRegistros.querySelectorAll('.registro__edit-cancel').forEach(btn => {
+            btn.addEventListener('click', () => {
+              btn.closest('.registro__edit').style.display = 'none';
+            });
+          });
+
+          detailRegistros.querySelectorAll('.registro__edit-save').forEach(btn => {
+            btn.addEventListener('click', async () => {
+              const form = btn.closest('.registro__edit');
+              const statusEl = form.querySelector('.registro__edit-status');
+              const estatus = form.querySelector('.registro__edit-estatus').value;
+              const responsableId = form.querySelector('.registro__edit-responsable').value || null;
+              btn.disabled = true;
+              statusEl.className = 'status registro__edit-status';
+              statusEl.textContent = 'Guardando...';
+              try {
+                const res = await fetch('/app/registro-editar', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    proyectoId: PROYECTO_ID,
+                    puntoId: btn.dataset.puntoId,
+                    registroId: btn.dataset.registroId || null,
+                    registroIndex: Number(btn.dataset.registroIndex),
+                    estatus,
+                    responsableId
+                  })
+                });
+                const body = await res.json().catch(() => ({}));
+                if (!res.ok) throw new Error((body.error || 'Error del servidor') + (body.debug ? ' — ' + body.debug : ''));
+                window.location.href = '/app/plano?proyecto=' + encodeURIComponent(PROYECTO_ID) + '&punto=' + encodeURIComponent(punto.id);
+              } catch (err) {
+                statusEl.className = 'status status--error registro__edit-status';
+                statusEl.textContent = err.message || 'No se pudo guardar.';
+                btn.disabled = false;
+              }
             });
           });
         }

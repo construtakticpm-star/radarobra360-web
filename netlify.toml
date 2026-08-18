@@ -38,6 +38,11 @@
   status = 200
 
 [[redirects]]
+  from = "/app/registro-editar"
+  to = "/.netlify/functions/app-registro-editar"
+  status = 200
+
+[[redirects]]
   from = "/app/media"
   to = "/.netlify/functions/app-media"
   status = 200

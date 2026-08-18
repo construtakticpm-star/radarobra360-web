@@ -65,6 +65,10 @@ p.lead{color:var(--muted);margin-bottom:28px;}
 .registro__estatus--listo{background:rgba(37,211,102,0.16);color:#1a7a44;}
 .registro__responsable{font-size:0.78rem;color:var(--muted);}
 .registro__notify{margin-top:10px;}
+.registro__edit-toggle{font-size:0.85rem;padding:0;}
+.registro__edit{display:flex;gap:8px;flex-wrap:wrap;align-items:center;background:var(--cream);border:1px solid var(--border);border-radius:10px;padding:10px;margin:8px 0 14px;}
+.registro__edit select{width:auto;flex:1 1 130px;margin:0;}
+.registro__edit .status{margin:0;flex-basis:100%;}
 
 .usuario-row{display:flex;justify-content:space-between;align-items:center;background:#fff;border:1px solid var(--border);border-radius:10px;padding:12px 16px;margin-bottom:8px;}
 .usuario-row__nombre{font-weight:700;color:var(--navy);font-size:0.95rem;}
@@ -134,9 +138,6 @@ textarea{resize:vertical;}
 .plano-detail__head h2{font-size:1.15rem;color:var(--navy);}
 .plano-detail__actions{display:flex;gap:8px;flex-wrap:wrap;}
 .plano-detail__responsable{font-size:0.85rem;color:var(--muted);margin-top:-10px;margin-bottom:16px;}
-.quick-estatus{display:flex;gap:8px;flex-wrap:wrap;align-items:center;background:var(--cream);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:18px;}
-.quick-estatus select{width:auto;flex:1 1 140px;margin:0;}
-.quick-estatus .status{margin:0;flex-basis:100%;}
 .plano-detail .registro{padding:14px;margin-bottom:12px;}
 .plano-detail .registro__media{grid-template-columns:repeat(auto-fill,minmax(100px,1fr));}
 .week-bars{display:flex;gap:8px;overflow-x:auto;padding-bottom:8px;margin-bottom:16px;}
@@ -153,7 +154,7 @@ textarea{resize:vertical;}
 
 @media print{
   body{background:#fff;}
-  .topbar,.plano-toolbar,.page-actions,.pin-picker,.lightbox,.plano-stage-col,#replaceInput,.plano-detail__actions,.week-bars,.media-item__delete,.media-item__share,.registro__notify,.quick-estatus{display:none !important;}
+  .topbar,.plano-toolbar,.page-actions,.pin-picker,.lightbox,.plano-stage-col,#replaceInput,.plano-detail__actions,.week-bars,.media-item__delete,.media-item__share,.registro__notify,.registro__edit,.registro__edit-toggle{display:none !important;}
   .wrap,.wrap--wide{max-width:none;padding:0;margin:0;}
   .plano-layout{display:block;}
   .plano-detail{position:static;max-height:none;overflow:visible;border:none;padding:0;box-shadow:none;}

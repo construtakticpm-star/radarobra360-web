@@ -159,19 +159,21 @@ exports.handler = async (event) => {
   const body = `
     ${topbar(proyectoId, proyecto.nombre)}
     <div class="wrap wrap--wide">
-      <p class="eyebrow">Visual de RadarObra360 · ${esc(proyecto.nombre)}</p>
-      <h1>Visual de RadarObra360</h1>
-      <p class="lead">Click en un pin para ver sus fotos y video sin salir del plano. Los frentes en estatus "Listo" se quitan de esta vista automáticamente.</p>
+      <div class="control-console">
+        <p class="eyebrow">Visual de RadarObra360 · ${esc(proyecto.nombre)}</p>
+        <h1>Visual de RadarObra360</h1>
+        <p class="lead">Click en un pin para ver sus fotos y video sin salir del plano. Los frentes en estatus "Listo" se quitan de esta vista automáticamente.</p>
 
-      <div class="plano-toolbar">
-        <button class="btn btn--primary" id="placeBtn">📍 Colocar punto</button>
-        <button type="button" class="btn btn--ghost" id="moveBtn" style="color:var(--navy); border-color:var(--border);">↔️ Mover punto</button>
-        <button type="button" class="btn btn--ghost" id="deleteBtn" style="color:#b5453f; border-color:var(--border);">🗑️ Eliminar punto</button>
-        <button type="button" class="btn btn--ghost" id="replaceBtn" style="color:var(--navy); border-color:var(--border);">🔄 Reemplazar plano</button>
-        <span class="hint" id="placeHint"></span>
+        <div class="plano-toolbar">
+          <button class="btn btn--primary" id="placeBtn">📍 Colocar punto</button>
+          <button type="button" class="btn btn--ghost" id="moveBtn">↔️ Mover punto</button>
+          <button type="button" class="btn btn--ghost" id="deleteBtn" style="color:#ff8a75;">🗑️ Eliminar punto</button>
+          <button type="button" class="btn btn--ghost" id="replaceBtn">🔄 Reemplazar plano</button>
+          <span class="hint" id="placeHint"></span>
+        </div>
+        <input type="file" id="replaceInput" accept="image/*" style="display:none;">
+        <div class="status" id="replaceStatus"></div>
       </div>
-      <input type="file" id="replaceInput" accept="image/*" style="display:none;">
-      <div class="status" id="replaceStatus"></div>
 
       <div class="plano-layout">
         <div class="plano-stage-col">

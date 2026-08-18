@@ -9,6 +9,7 @@ exports.handler = async (event) => {
   const data = await getData();
   const puntosOptions = data.puntos.map(p => `<option value="${esc(p.nombre)}">`).join("");
   const today = new Date().toISOString().slice(0, 10);
+  const puntoPrefill = (event.queryStringParameters && event.queryStringParameters.punto) || "";
 
   const body = `
     ${topbar()}
@@ -21,7 +22,7 @@ exports.handler = async (event) => {
 
         <form id="f">
           <label for="punto">Punto / frente</label>
-          <input type="text" id="punto" list="puntos-list" required placeholder="Ej. Cimentación, Fachada Norte...">
+          <input type="text" id="punto" list="puntos-list" required placeholder="Ej. Cimentación, Fachada Norte..." value="${esc(puntoPrefill)}">
           <datalist id="puntos-list">${puntosOptions}</datalist>
           <div class="hint">Si ya existe, se agrega ahí. Si es nuevo, se crea.</div>
 

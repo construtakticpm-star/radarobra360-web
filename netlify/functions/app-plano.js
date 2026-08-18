@@ -83,37 +83,57 @@ exports.handler = async (event) => {
   const unplaced = data.puntos.filter(p => p.x == null || p.y == null);
 
   const pinsHtml = placed.map(p => `
-    <a class="pin" href="/app/punto?id=${esc(p.id)}" style="left:${p.x}%; top:${p.y}%;" title="${esc(p.nombre)}">
+    <button type="button" class="pin" data-punto-id="${esc(p.id)}" style="left:${p.x}%; top:${p.y}%;" title="${esc(p.nombre)}">
       <span class="pin__dot"></span>
       <span class="pin__label">${esc(p.nombre)}</span>
-    </a>`).join("");
+    </button>`).join("");
 
   const unplacedOptionsHtml = unplaced.map(p => `<option value="${esc(p.id)}">${esc(p.nombre)}</option>`).join("");
 
   const unplacedListHtml = unplaced.length ? `
-    <p class="eyebrow" style="margin-top:32px;">Sin ubicar todavía</p>
+    <p class="eyebrow" style="margin-top:24px;">Sin ubicar todavía</p>
     <div class="unplaced-list">
-      ${unplaced.map(p => `<div class="unplaced-item">${esc(p.nombre)} — <a href="/app/punto?id=${esc(p.id)}" style="color:var(--cyan);">ver</a></div>`).join("")}
+      ${unplaced.map(p => `<div class="unplaced-item">${esc(p.nombre)} — <button type="button" class="linklike" data-punto-id="${esc(p.id)}">ver fotos</button></div>`).join("")}
     </div>` : "";
+
+  // Full punto data (incl. registros/fotos/video ids) embedded so clicking a
+  // pin renders instantly, no extra round trip to fetch each punto.
+  const puntosDataJson = JSON.stringify(data.puntos.map(p => ({
+    id: p.id, nombre: p.nombre, registros: p.registros || []
+  })));
 
   const body = `
     ${topbar()}
-    <div class="wrap">
+    <div class="wrap wrap--wide">
       <p class="eyebrow">Plano de obra</p>
-      <h1>Plano interactivo</h1>
-      <p class="lead">Click en "Colocar punto", luego click en el plano donde corresponda.</p>
+      <h1>Plano + fotos</h1>
+      <p class="lead">Click en un pin para ver sus fotos y video sin salir del plano. "Colocar punto" para agregar uno nuevo.</p>
 
       <div class="plano-toolbar">
         <button class="btn btn--primary" id="placeBtn">📍 Colocar punto</button>
         <span class="hint" id="placeHint"></span>
       </div>
 
-      <div class="plano-stage" id="stage">
-        <img src="/app/media?id=${esc(data.plano.mediaId)}" alt="Plano de obra" id="planoImg">
-        ${pinsHtml}
-      </div>
+      <div class="plano-layout">
+        <div class="plano-stage-col">
+          <div class="plano-stage" id="stage">
+            <img src="/app/media?id=${esc(data.plano.mediaId)}" alt="Plano de obra" id="planoImg">
+            ${pinsHtml}
+          </div>
+          ${unplacedListHtml}
+        </div>
 
-      ${unplacedListHtml}
+        <div class="plano-detail" id="detailPanel">
+          <div class="plano-detail__empty" id="detailEmpty">👈 Selecciona un punto en el plano para ver sus fotos y video aquí.</div>
+          <div class="plano-detail__content" id="detailContent" style="display:none;">
+            <div class="plano-detail__head">
+              <h2 id="detailName"></h2>
+              <a id="detailAddLink" class="btn btn--primary btn--small" href="#">＋ Agregar aquí</a>
+            </div>
+            <div id="detailRegistros"></div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <div class="pin-picker" id="picker" style="display:none;">
@@ -133,6 +153,8 @@ exports.handler = async (event) => {
     </div>
 
     <script>
+      const PUNTOS_DATA = ${puntosDataJson};
+
       const stage = document.getElementById('stage');
       const planoImg = document.getElementById('planoImg');
       const placeBtn = document.getElementById('placeBtn');
@@ -143,6 +165,52 @@ exports.handler = async (event) => {
       const confirmPin = document.getElementById('confirmPin');
       const cancelPin = document.getElementById('cancelPin');
       const pickerStatus = document.getElementById('pickerStatus');
+
+      const detailEmpty = document.getElementById('detailEmpty');
+      const detailContent = document.getElementById('detailContent');
+      const detailName = document.getElementById('detailName');
+      const detailAddLink = document.getElementById('detailAddLink');
+      const detailRegistros = document.getElementById('detailRegistros');
+
+      function mediaTag(id, isVideo) {
+        return isVideo
+          ? '<video controls preload="metadata" src="/app/media?id=' + id + '"></video>'
+          : '<img src="/app/media?id=' + id + '" alt="Foto">';
+      }
+
+      function renderDetail(puntoId) {
+        const punto = PUNTOS_DATA.find(p => p.id === puntoId);
+        if (!punto) return;
+
+        document.querySelectorAll('.pin').forEach(p => p.classList.toggle('pin--active', p.dataset.puntoId === puntoId));
+
+        detailEmpty.style.display = 'none';
+        detailContent.style.display = 'block';
+        detailName.textContent = punto.nombre;
+        detailAddLink.href = '/app/registrar?punto=' + encodeURIComponent(punto.nombre);
+
+        if (!punto.registros.length) {
+          detailRegistros.innerHTML = '<div class="empty">Sin registros todavía. <a href="' + detailAddLink.href + '" style="color:var(--cyan);">Agregar el primero</a></div>';
+          return;
+        }
+
+        detailRegistros.innerHTML = punto.registros.map(r => {
+          const fotos = (r.fotos || []).map(id => mediaTag(id, false)).join('');
+          const video = r.video ? mediaTag(r.video, true) : '';
+          return '<div class="registro">'
+            + '<div class="registro__head"><span class="registro__fecha">' + r.fecha + '</span></div>'
+            + (r.nota ? '<p class="registro__nota">' + r.nota + '</p>' : '')
+            + '<div class="registro__media">' + fotos + video + '</div>'
+            + '</div>';
+        }).join('');
+      }
+
+      document.querySelectorAll('.pin, [data-punto-id].linklike').forEach(el => {
+        el.addEventListener('click', (e) => {
+          e.stopPropagation();
+          renderDetail(el.dataset.puntoId);
+        });
+      });
 
       let placing = false;
       let pendingCoords = null;

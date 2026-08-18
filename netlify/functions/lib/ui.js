@@ -18,8 +18,11 @@ a{color:inherit;}
 .btn--primary{background:var(--cyan);color:#04141f;}
 .btn--ghost{border-color:rgba(255,255,255,0.4);color:#fff;background:none;}
 .btn--block{width:100%;text-align:center;}
+.btn--small{padding:7px 14px;font-size:0.78rem;}
+.linklike{background:none;border:none;color:var(--cyan);font-weight:600;cursor:pointer;font-size:inherit;font-family:inherit;padding:0;}
 .wrap{max-width:1100px;margin:0 auto;padding:6vh 5vw;}
 .wrap--narrow{max-width:560px;}
+.wrap--wide{max-width:1300px;}
 .eyebrow{display:inline-block;font-size:0.75rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--cyan);font-weight:700;margin-bottom:10px;}
 h1{font-size:clamp(1.5rem,3vw,2.1rem);color:var(--navy);margin-bottom:8px;}
 p.lead{color:var(--muted);margin-bottom:28px;}
@@ -78,6 +81,21 @@ textarea{resize:vertical;}
 .pin-picker__card h3{color:var(--navy);margin-bottom:14px;font-size:1.05rem;}
 .unplaced-list{display:flex;flex-direction:column;gap:8px;margin-top:24px;}
 .unplaced-item{background:#fff;border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-size:0.88rem;color:var(--navy);}
+
+.plano-layout{display:grid;grid-template-columns:1.5fr 1fr;gap:24px;align-items:start;}
+.plano-stage-col{min-width:0;}
+.pin--active .pin__dot{background:var(--amber);box-shadow:0 0 0 4px rgba(242,160,61,0.35),0 2px 6px rgba(0,0,0,0.4);}
+.pin--active .pin__label{background:var(--amber);color:#04141f;}
+.plano-detail{background:#fff;border:1px solid var(--border);border-radius:16px;padding:22px;position:sticky;top:90px;max-height:calc(100vh - 110px);overflow-y:auto;}
+.plano-detail__empty{color:var(--muted);font-size:0.9rem;text-align:center;padding:30px 10px;}
+.plano-detail__head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap;}
+.plano-detail__head h2{font-size:1.15rem;color:var(--navy);}
+.plano-detail .registro{padding:14px;margin-bottom:12px;}
+.plano-detail .registro__media{grid-template-columns:repeat(auto-fill,minmax(100px,1fr));}
+@media (max-width:860px){
+  .plano-layout{grid-template-columns:1fr;}
+  .plano-detail{position:static;max-height:none;}
+}
 `;
 
 function shell(title, body) {

@@ -1,20 +1,34 @@
 const { checkAuth } = require("./lib/auth");
-const { getData } = require("./lib/store");
+const { getData, findProyecto } = require("./lib/store");
 const { esc, shell, topbar } = require("./lib/ui");
 
 exports.handler = async (event) => {
   const auth = checkAuth(event, "RadarObra360 — registrar");
   if (!auth.ok) return auth.response;
 
+  const params = event.queryStringParameters || {};
+  const proyectoId = params.proyecto;
   const data = await getData();
-  const puntosOptions = data.puntos.map(p => `<option value="${esc(p.nombre)}">`).join("");
+  const proyecto = findProyecto(data, proyectoId);
+
+  if (!proyecto) {
+    return {
+      statusCode: 404,
+      headers: { "Content-Type": "text/html; charset=utf-8" },
+      body: shell("No encontrado", `${topbar()}<div class="wrap"><p>Proyecto no encontrado. <a href="/app">Volver</a></p></div>`)
+    };
+  }
+
+  const puntosOptions = (proyecto.puntos || []).map(p => `<option value="${esc(p.nombre)}">`).join("");
   const today = new Date().toISOString().slice(0, 10);
-  const puntoPrefill = (event.queryStringParameters && event.queryStringParameters.punto) || "";
+  const puntoPrefill = params.punto || "";
+  const usuarios = data.usuarios || [];
+  const responsableOptions = usuarios.map(u => `<option value="${esc(u.id)}">${esc(u.nombre)}</option>`).join("");
 
   const body = `
-    ${topbar()}
+    ${topbar(proyectoId, proyecto.nombre)}
     <div class="wrap wrap--narrow">
-      <a class="back" href="/app">← Volver</a>
+      <a class="back" href="/app?proyecto=${esc(proyectoId)}">← Volver</a>
       <div class="card">
         <p class="eyebrow">Nuevo registro</p>
         <h1>Registrar avance</h1>
@@ -32,6 +46,20 @@ exports.handler = async (event) => {
           <label for="nota">Nota (opcional)</label>
           <textarea id="nota" rows="2" placeholder="Ej. Avance de armado, incidencia detectada..."></textarea>
 
+          <label for="estatus">Estatus</label>
+          <select id="estatus">
+            <option value="pendiente">Pendiente</option>
+            <option value="en-proceso">En proceso</option>
+            <option value="listo">Listo</option>
+          </select>
+
+          <label for="responsable">Responsable (opcional)</label>
+          <select id="responsable">
+            <option value="">— Sin asignar —</option>
+            ${responsableOptions}
+          </select>
+          ${usuarios.length ? "" : `<div class="hint">Todavía no hay usuarios cargados. <a href="/app/usuarios" style="color:var(--cyan);">Agrégalos aquí</a>.</div>`}
+
           <label for="fotos">Fotos</label>
           <input type="file" id="fotos" accept="image/*" multiple>
           <div class="hint" id="fotos-hint"></div>
@@ -47,6 +75,7 @@ exports.handler = async (event) => {
     </div>
 
     <script>
+      const PROYECTO_ID = ${JSON.stringify(proyectoId)};
       const form = document.getElementById('f');
       const fotosInput = document.getElementById('fotos');
       const videoInput = document.getElementById('video');
@@ -93,9 +122,12 @@ exports.handler = async (event) => {
         statusEl.textContent = 'Guardando...';
 
         const payload = {
+          proyectoId: PROYECTO_ID,
           punto: document.getElementById('punto').value,
           fecha: document.getElementById('fecha').value,
           nota: document.getElementById('nota').value,
+          estatus: document.getElementById('estatus').value,
+          responsableId: document.getElementById('responsable').value || null,
           fotos: [],
           video: null
         };
@@ -117,7 +149,7 @@ exports.handler = async (event) => {
           if (!res.ok) throw new Error((body.error || 'Error del servidor') + (body.debug ? ' — ' + body.debug : ''));
           statusEl.className = 'status status--ok';
           statusEl.textContent = '¡Guardado! Redirigiendo...';
-          setTimeout(() => { window.location.href = '/app'; }, 700);
+          setTimeout(() => { window.location.href = '/app?proyecto=' + encodeURIComponent(PROYECTO_ID); }, 700);
         } catch (err) {
           statusEl.className = 'status status--error';
           statusEl.textContent = err.message || 'No se pudo guardar.';

@@ -8,6 +8,21 @@
   status = 200
 
 [[redirects]]
+  from = "/app/proyecto-crear"
+  to = "/.netlify/functions/app-proyecto-crear"
+  status = 200
+
+[[redirects]]
+  from = "/app/usuarios"
+  to = "/.netlify/functions/app-usuarios"
+  status = 200
+
+[[redirects]]
+  from = "/app/usuario-crear"
+  to = "/.netlify/functions/app-usuario-crear"
+  status = 200
+
+[[redirects]]
   from = "/app/punto"
   to = "/.netlify/functions/app-punto"
   status = 200
@@ -25,6 +40,11 @@
 [[redirects]]
   from = "/app/media"
   to = "/.netlify/functions/app-media"
+  status = 200
+
+[[redirects]]
+  from = "/app/media-delete"
+  to = "/.netlify/functions/app-media-delete"
   status = 200
 
 [[redirects]]

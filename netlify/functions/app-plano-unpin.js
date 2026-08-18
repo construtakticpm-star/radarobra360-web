@@ -1,5 +1,5 @@
 const { checkAuth } = require("./lib/auth");
-const { getData, saveData } = require("./lib/store");
+const { getData, saveData, findProyecto } = require("./lib/store");
 
 exports.handler = async (event) => {
   const auth = checkAuth(event);
@@ -16,14 +16,19 @@ exports.handler = async (event) => {
     return { statusCode: 400, headers: { "Content-Type": "application/json" }, body: JSON.stringify({ error: "JSON inválido" }) };
   }
 
-  const { puntoId } = payload;
-  if (!puntoId) {
-    return { statusCode: 400, headers: { "Content-Type": "application/json" }, body: JSON.stringify({ error: "Falta puntoId" }) };
+  const { proyectoId, puntoId } = payload;
+  if (!proyectoId || !puntoId) {
+    return { statusCode: 400, headers: { "Content-Type": "application/json" }, body: JSON.stringify({ error: "Faltan datos" }) };
   }
 
   try {
     const data = await getData();
-    const punto = data.puntos.find(p => p.id === puntoId);
+    const proyecto = findProyecto(data, proyectoId);
+    if (!proyecto) {
+      return { statusCode: 404, headers: { "Content-Type": "application/json" }, body: JSON.stringify({ error: "Proyecto no encontrado" }) };
+    }
+
+    const punto = proyecto.puntos.find(p => p.id === puntoId);
     if (!punto) {
       return { statusCode: 404, headers: { "Content-Type": "application/json" }, body: JSON.stringify({ error: "Punto no encontrado" }) };
     }

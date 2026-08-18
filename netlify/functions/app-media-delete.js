@@ -1,5 +1,5 @@
 const { checkAuth } = require("./lib/auth");
-const { getData, saveData, findProyecto, slugify } = require("./lib/store");
+const { getData, saveData, findProyecto, deleteMedia } = require("./lib/store");
 
 exports.handler = async (event) => {
   const auth = checkAuth(event);
@@ -16,8 +16,8 @@ exports.handler = async (event) => {
     return { statusCode: 400, headers: { "Content-Type": "application/json" }, body: JSON.stringify({ error: "JSON inválido" }) };
   }
 
-  const { proyectoId, puntoId, nombre, x, y } = payload;
-  if (!proyectoId || x == null || y == null || (!puntoId && !nombre)) {
+  const { proyectoId, puntoId, mediaId } = payload;
+  if (!proyectoId || !puntoId || !mediaId) {
     return { statusCode: 400, headers: { "Content-Type": "application/json" }, body: JSON.stringify({ error: "Faltan datos" }) };
   }
 
@@ -27,32 +27,39 @@ exports.handler = async (event) => {
     if (!proyecto) {
       return { statusCode: 404, headers: { "Content-Type": "application/json" }, body: JSON.stringify({ error: "Proyecto no encontrado" }) };
     }
-
-    let punto;
-
-    if (puntoId) {
-      punto = proyecto.puntos.find(p => p.id === puntoId);
-      if (!punto) {
-        return { statusCode: 404, headers: { "Content-Type": "application/json" }, body: JSON.stringify({ error: "Punto no encontrado" }) };
-      }
-    } else {
-      const id = slugify(nombre);
-      punto = proyecto.puntos.find(p => p.id === id);
-      if (!punto) {
-        punto = { id, nombre, registros: [] };
-        proyecto.puntos.unshift(punto);
-      }
+    const punto = (proyecto.puntos || []).find(p => p.id === puntoId);
+    if (!punto) {
+      return { statusCode: 404, headers: { "Content-Type": "application/json" }, body: JSON.stringify({ error: "Punto no encontrado" }) };
     }
 
-    punto.x = x;
-    punto.y = y;
+    let found = false;
+    for (const reg of punto.registros || []) {
+      if (reg.fotos && reg.fotos.includes(mediaId)) {
+        reg.fotos = reg.fotos.filter(id => id !== mediaId);
+        found = true;
+        break;
+      }
+      if (reg.video === mediaId) {
+        reg.video = null;
+        found = true;
+        break;
+      }
+    }
+    if (!found) {
+      return { statusCode: 404, headers: { "Content-Type": "application/json" }, body: JSON.stringify({ error: "Archivo no encontrado en este punto" }) };
+    }
 
     await saveData(data);
+    try {
+      await deleteMedia(mediaId);
+    } catch (e) {
+      // Reference already removed from the registro; blob cleanup is best-effort.
+    }
   } catch (e) {
     return {
       statusCode: 503,
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ error: "No se pudo guardar la ubicación.", debug: e.message })
+      body: JSON.stringify({ error: "No se pudo eliminar el archivo.", debug: e.message })
     };
   }
 

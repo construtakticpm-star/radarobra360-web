@@ -1,6 +1,6 @@
 const crypto = require("crypto");
 const { checkAuth } = require("./lib/auth");
-const { getData, saveData, saveMedia } = require("./lib/store");
+const { getData, saveData, saveMedia, findProyecto } = require("./lib/store");
 
 exports.handler = async (event) => {
   const auth = checkAuth(event);
@@ -17,16 +17,21 @@ exports.handler = async (event) => {
     return { statusCode: 400, headers: { "Content-Type": "application/json" }, body: JSON.stringify({ error: "JSON inválido" }) };
   }
 
-  const { base64, contentType } = payload;
-  if (!base64) {
-    return { statusCode: 400, headers: { "Content-Type": "application/json" }, body: JSON.stringify({ error: "Falta la imagen" }) };
+  const { proyectoId, base64, contentType } = payload;
+  if (!proyectoId || !base64) {
+    return { statusCode: 400, headers: { "Content-Type": "application/json" }, body: JSON.stringify({ error: "Falta proyectoId o la imagen" }) };
   }
 
   try {
+    const data = await getData();
+    const proyecto = findProyecto(data, proyectoId);
+    if (!proyecto) {
+      return { statusCode: 404, headers: { "Content-Type": "application/json" }, body: JSON.stringify({ error: "Proyecto no encontrado" }) };
+    }
+
     const id = crypto.randomUUID();
     await saveMedia(id, base64, contentType || "image/jpeg");
-    const data = await getData();
-    data.plano = { mediaId: id };
+    proyecto.plano = { mediaId: id };
     await saveData(data);
   } catch (e) {
     return {

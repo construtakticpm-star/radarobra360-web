@@ -1,16 +1,9 @@
 const crypto = require("crypto");
 const { checkAuth } = require("./lib/auth");
-const { getData, saveData, saveMedia } = require("./lib/store");
+const { getData, saveData, saveMedia, findProyecto, slugify } = require("./lib/store");
 
 const MAX_TOTAL_BYTES = 4.7 * 1024 * 1024; // ~3.5MB raw inflates ~33% as base64
-
-function slugify(str) {
-  return String(str)
-    .toLowerCase()
-    .normalize("NFD").replace(/[̀-ͯ]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "") || crypto.randomUUID().slice(0, 8);
-}
+const ESTATUS_VALIDOS = ["pendiente", "en-proceso", "listo"];
 
 exports.handler = async (event) => {
   const auth = checkAuth(event, "RadarObra360 — registrar");
@@ -27,9 +20,9 @@ exports.handler = async (event) => {
     return { statusCode: 400, headers: { "Content-Type": "application/json" }, body: JSON.stringify({ error: "JSON inválido" }) };
   }
 
-  const { punto, fecha, nota, fotos, video } = payload;
+  const { proyectoId, punto, fecha, nota, estatus, responsableId, fotos, video } = payload;
 
-  if (!punto || !fecha) {
+  if (!proyectoId || !punto || !fecha) {
     return { statusCode: 400, headers: { "Content-Type": "application/json" }, body: JSON.stringify({ error: "Faltan campos requeridos" }) };
   }
 
@@ -39,9 +32,21 @@ exports.handler = async (event) => {
     return { statusCode: 413, headers: { "Content-Type": "application/json" }, body: JSON.stringify({ error: "El registro pesa demasiado — reduce fotos o video." }) };
   }
 
-  const registro = { fecha, nota: nota || "", fotos: [] };
+  const registro = {
+    fecha,
+    nota: nota || "",
+    estatus: ESTATUS_VALIDOS.includes(estatus) ? estatus : "pendiente",
+    responsableId: responsableId || null,
+    fotos: []
+  };
 
   try {
+    const data = await getData();
+    const proyecto = findProyecto(data, proyectoId);
+    if (!proyecto) {
+      return { statusCode: 404, headers: { "Content-Type": "application/json" }, body: JSON.stringify({ error: "Proyecto no encontrado" }) };
+    }
+
     for (const foto of fotos || []) {
       const id = crypto.randomUUID();
       await saveMedia(id, foto.base64, foto.contentType || "image/jpeg");
@@ -53,12 +58,11 @@ exports.handler = async (event) => {
       registro.video = id;
     }
 
-    const data = await getData();
     const puntoId = slugify(punto);
-    let puntoObj = data.puntos.find(p => p.id === puntoId);
+    let puntoObj = proyecto.puntos.find(p => p.id === puntoId);
     if (!puntoObj) {
       puntoObj = { id: puntoId, nombre: punto, registros: [] };
-      data.puntos.unshift(puntoObj);
+      proyecto.puntos.unshift(puntoObj);
     }
     puntoObj.registros = [registro, ...(puntoObj.registros || [])];
 

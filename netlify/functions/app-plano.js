@@ -1,19 +1,29 @@
 const { checkAuth } = require("./lib/auth");
-const { getData } = require("./lib/store");
+const { getData, findProyecto } = require("./lib/store");
 const { esc, shell, topbar, lightboxMarkup, lightboxScript } = require("./lib/ui");
 
 exports.handler = async (event) => {
   const auth = checkAuth(event);
   if (!auth.ok) return auth.response;
 
+  const proyectoId = event.queryStringParameters && event.queryStringParameters.proyecto;
   const data = await getData();
+  const proyecto = findProyecto(data, proyectoId);
+
+  if (!proyecto) {
+    return {
+      statusCode: 404,
+      headers: { "Content-Type": "text/html; charset=utf-8" },
+      body: shell("No encontrado", `${topbar()}<div class="wrap"><p>Proyecto no encontrado. <a href="/app">Volver</a></p></div>`)
+    };
+  }
 
   // ---------- No plano uploaded yet: show the upload form ----------
-  if (!data.plano) {
+  if (!proyecto.plano) {
     const body = `
-      ${topbar()}
+      ${topbar(proyectoId, proyecto.nombre)}
       <div class="wrap wrap--narrow">
-        <p class="eyebrow">Plano de obra</p>
+        <p class="eyebrow">Plano de obra · ${esc(proyecto.nombre)}</p>
         <h1>Sube el plano o croquis</h1>
         <p class="lead">Una sola vez. Después colocas cada punto haciendo click directo sobre él.</p>
         <div class="card">
@@ -27,6 +37,7 @@ exports.handler = async (event) => {
         </div>
       </div>
       <script>
+        const PROYECTO_ID = ${JSON.stringify(proyectoId)};
         const form = document.getElementById('f');
         const imagenInput = document.getElementById('imagen');
         const statusEl = document.getElementById('status');
@@ -58,11 +69,11 @@ exports.handler = async (event) => {
             const res = await fetch('/app/plano-upload', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ base64, contentType: file.type })
+              body: JSON.stringify({ proyectoId: PROYECTO_ID, base64, contentType: file.type })
             });
             const body = await res.json().catch(() => ({}));
             if (!res.ok) throw new Error((body.error || 'Error del servidor') + (body.debug ? ' — ' + body.debug : ''));
-            window.location.href = '/app/plano';
+            window.location.href = '/app/plano?proyecto=' + encodeURIComponent(PROYECTO_ID);
           } catch (err) {
             statusEl.className = 'status status--error';
             statusEl.textContent = err.message || 'No se pudo subir.';
@@ -79,8 +90,9 @@ exports.handler = async (event) => {
   }
 
   // ---------- Plano exists: interactive map ----------
-  const placed = data.puntos.filter(p => p.x != null && p.y != null);
-  const unplaced = data.puntos.filter(p => p.x == null || p.y == null);
+  const puntos = proyecto.puntos || [];
+  const placed = puntos.filter(p => p.x != null && p.y != null);
+  const unplaced = puntos.filter(p => p.x == null || p.y == null);
 
   const pinsHtml = placed.map(p => `
     <button type="button" class="pin" data-punto-id="${esc(p.id)}" style="left:${p.x}%; top:${p.y}%;" title="${esc(p.nombre)}">
@@ -98,14 +110,17 @@ exports.handler = async (event) => {
 
   // Full punto data (incl. registros/fotos/video ids) embedded so clicking a
   // pin renders instantly, no extra round trip to fetch each punto.
-  const puntosDataJson = JSON.stringify(data.puntos.map(p => ({
+  // `<` is escaped to < so a nota/nombre containing "</script>" can't
+  // break out of the <script> tag this gets embedded in below.
+  const puntosDataJson = JSON.stringify(puntos.map(p => ({
     id: p.id, nombre: p.nombre, registros: p.registros || []
-  })));
+  }))).replace(/</g, "\\u003c");
+  const usuariosDataJson = JSON.stringify(data.usuarios || []).replace(/</g, "\\u003c");
 
   const body = `
-    ${topbar()}
+    ${topbar(proyectoId, proyecto.nombre)}
     <div class="wrap wrap--wide">
-      <p class="eyebrow">Plano de obra</p>
+      <p class="eyebrow">Plano de obra · ${esc(proyecto.nombre)}</p>
       <h1>Plano + fotos</h1>
       <p class="lead">Click en un pin para ver sus fotos y video sin salir del plano. "Colocar punto" para agregar uno nuevo.</p>
 
@@ -122,7 +137,7 @@ exports.handler = async (event) => {
       <div class="plano-layout">
         <div class="plano-stage-col">
           <div class="plano-stage" id="stage">
-            <img src="/app/media?id=${esc(data.plano.mediaId)}" alt="Plano de obra" id="planoImg">
+            <img src="/app/media?id=${esc(proyecto.plano.mediaId)}" alt="Plano de obra" id="planoImg">
             ${pinsHtml}
           </div>
           ${unplacedListHtml}
@@ -133,7 +148,11 @@ exports.handler = async (event) => {
           <div class="plano-detail__content" id="detailContent" style="display:none;">
             <div class="plano-detail__head">
               <h2 id="detailName"></h2>
-              <a id="detailAddLink" class="btn btn--primary btn--small" href="#">＋ Agregar aquí</a>
+              <div class="plano-detail__actions">
+                <button type="button" class="btn btn--ghost btn--small" id="exportBtn" style="color:var(--navy); border-color:var(--border);">🖨️ Exportar</button>
+                <button type="button" class="btn btn--ghost btn--small" id="shareBtn" style="color:var(--navy); border-color:var(--border);">📤 Compartir</button>
+                <a id="detailAddLink" class="btn btn--primary btn--small" href="#">＋ Agregar aquí</a>
+              </div>
             </div>
             <div id="detailRegistros"></div>
           </div>
@@ -162,7 +181,10 @@ exports.handler = async (event) => {
     <script>
       ${lightboxScript()}
 
+      const PROYECTO_ID = ${JSON.stringify(proyectoId)};
       const PUNTOS_DATA = ${puntosDataJson};
+      const USUARIOS_DATA = ${usuariosDataJson};
+      const ESTATUS_LABELS = { pendiente: 'Pendiente', 'en-proceso': 'En proceso', listo: 'Listo' };
 
       const stage = document.getElementById('stage');
       const planoImg = document.getElementById('planoImg');
@@ -185,11 +207,34 @@ exports.handler = async (event) => {
       const detailName = document.getElementById('detailName');
       const detailAddLink = document.getElementById('detailAddLink');
       const detailRegistros = document.getElementById('detailRegistros');
+      const exportBtn = document.getElementById('exportBtn');
+      const shareBtn = document.getElementById('shareBtn');
+
+      exportBtn.addEventListener('click', () => window.print());
+      shareBtn.addEventListener('click', () => {
+        const url = window.location.href;
+        if (navigator.share) {
+          navigator.share({ title: document.title, url }).catch(() => {});
+        } else if (navigator.clipboard) {
+          navigator.clipboard.writeText(url).then(() => alert('Link copiado al portapapeles.')).catch(() => prompt('Copia este link:', url));
+        } else {
+          prompt('Copia este link:', url);
+        }
+      });
+
+      function escHtml(str) {
+        return String(str).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+      }
 
       function mediaTag(id, isVideo) {
-        return isVideo
+        const kind = isVideo ? 'video' : 'foto';
+        const el = isVideo
           ? '<video controls preload="metadata" src="/app/media?id=' + id + '"></video>'
           : '<img src="/app/media?id=' + id + '" alt="Foto" class="lightbox-trigger" data-media-id="' + id + '">';
+        return '<div class="media-item">' + el
+          + '<button type="button" class="media-item__share" data-media-id="' + id + '" title="Compartir por WhatsApp">📲</button>'
+          + '<button type="button" class="media-item__delete" data-media-id="' + id + '" title="Eliminar ' + kind + '">🗑️</button>'
+          + '</div>';
       }
 
       function fileToBase64(file) {
@@ -223,7 +268,7 @@ exports.handler = async (event) => {
           const res = await fetch('/app/plano-upload', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ base64, contentType: file.type })
+            body: JSON.stringify({ proyectoId: PROYECTO_ID, base64, contentType: file.type })
           });
           const body = await res.json().catch(() => ({}));
           if (!res.ok) throw new Error((body.error || 'Error del servidor') + (body.debug ? ' — ' + body.debug : ''));
@@ -263,14 +308,25 @@ exports.handler = async (event) => {
         return registros.reduce((sum, r) => sum + (r.fotos ? r.fotos.length : 0) + (r.video ? 1 : 0), 0);
       }
 
-      function renderRegistros(registros) {
+      function renderRegistros(registros, puntoNombre) {
         return registros.map(r => {
           const fotos = (r.fotos || []).map(id => mediaTag(id, false)).join('');
           const video = r.video ? mediaTag(r.video, true) : '';
+          const estatus = r.estatus || 'pendiente';
+          const responsable = r.responsableId ? USUARIOS_DATA.find(u => u.id === r.responsableId) : null;
+          const fecha = escHtml(r.fecha);
+          const nota = escHtml(r.nota || '');
+          const notifyBtn = estatus === 'listo'
+            ? '<button type="button" class="btn btn--ghost btn--small registro__notify" data-whatsapp="' + (responsable ? escHtml(responsable.whatsapp) : '') + '" data-nombre="' + escHtml(puntoNombre) + '" data-fecha="' + fecha + '" style="color:var(--navy); border-color:var(--border);">📲 Notificar' + (responsable ? ' a ' + escHtml(responsable.nombre) : '') + '</button>'
+            : '';
           return '<div class="registro">'
-            + '<div class="registro__head"><span class="registro__fecha">' + r.fecha + '</span></div>'
-            + (r.nota ? '<p class="registro__nota">' + r.nota + '</p>' : '')
+            + '<div class="registro__head"><span class="registro__fecha">' + fecha + '</span>'
+            + '<span class="registro__estatus registro__estatus--' + estatus + '">' + (ESTATUS_LABELS[estatus] || estatus) + '</span>'
+            + (responsable ? '<span class="registro__responsable">👤 ' + escHtml(responsable.nombre) + '</span>' : '')
+            + '</div>'
+            + (nota ? '<p class="registro__nota">' + nota + '</p>' : '')
             + '<div class="registro__media">' + fotos + video + '</div>'
+            + notifyBtn
             + '</div>';
         }).join('');
       }
@@ -281,12 +337,17 @@ exports.handler = async (event) => {
         const punto = PUNTOS_DATA.find(p => p.id === puntoId);
         if (!punto) return;
 
+        if (window.history && window.history.replaceState) {
+          const url = '/app/plano?proyecto=' + encodeURIComponent(PROYECTO_ID) + '&punto=' + encodeURIComponent(puntoId);
+          window.history.replaceState(null, '', url);
+        }
+
         document.querySelectorAll('.pin').forEach(p => p.classList.toggle('pin--active', p.dataset.puntoId === puntoId));
 
         detailEmpty.style.display = 'none';
         detailContent.style.display = 'block';
         detailName.textContent = punto.nombre;
-        detailAddLink.href = '/app/registrar?punto=' + encodeURIComponent(punto.nombre);
+        detailAddLink.href = '/app/registrar?proyecto=' + encodeURIComponent(PROYECTO_ID) + '&punto=' + encodeURIComponent(punto.nombre);
 
         if (!punto.registros.length) {
           detailRegistros.innerHTML = '<div class="empty">Sin registros todavía. <a href="' + detailAddLink.href + '" style="color:var(--cyan);">Agregar el primero</a></div>';
@@ -306,7 +367,7 @@ exports.handler = async (event) => {
               + '</button>';
           }).join('') + '</div>';
 
-          detailRegistros.innerHTML = barsHtml + '<div id="weekRegistros">' + renderRegistros(current.registros) + '</div>';
+          detailRegistros.innerHTML = barsHtml + '<div id="weekRegistros">' + renderRegistros(current.registros, punto.nombre) + '</div>';
 
           detailRegistros.querySelectorAll('.week-bar').forEach(btn => {
             btn.addEventListener('click', () => {
@@ -316,6 +377,50 @@ exports.handler = async (event) => {
           });
 
           attachLightbox(detailRegistros);
+
+          detailRegistros.querySelectorAll('.media-item__delete').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+              e.stopPropagation();
+              const mediaId = btn.dataset.mediaId;
+              if (!confirm('¿Eliminar este archivo? Esta acción no se puede deshacer.')) return;
+              btn.disabled = true;
+              try {
+                const res = await fetch('/app/media-delete', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ proyectoId: PROYECTO_ID, puntoId: punto.id, mediaId })
+                });
+                const body = await res.json().catch(() => ({}));
+                if (!res.ok) throw new Error((body.error || 'Error del servidor') + (body.debug ? ' — ' + body.debug : ''));
+                punto.registros.forEach(r => {
+                  if (r.fotos) r.fotos = r.fotos.filter(fid => fid !== mediaId);
+                  if (r.video === mediaId) r.video = null;
+                });
+                paintWeek();
+              } catch (err) {
+                alert(err.message || 'No se pudo eliminar.');
+                btn.disabled = false;
+              }
+            });
+          });
+
+          detailRegistros.querySelectorAll('.media-item__share').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+              e.stopPropagation();
+              const url = window.location.origin + '/app/media?id=' + btn.dataset.mediaId;
+              const texto = 'Foto de ' + punto.nombre + ': ' + url;
+              window.open('https://wa.me/?text=' + encodeURIComponent(texto), '_blank');
+            });
+          });
+
+          detailRegistros.querySelectorAll('.registro__notify').forEach(btn => {
+            btn.addEventListener('click', () => {
+              const numero = (btn.dataset.whatsapp || '').replace(/[^0-9]/g, '');
+              const texto = btn.dataset.nombre + ' — ' + btn.dataset.fecha + ' quedó en estatus Listo. ' + window.location.href;
+              const base = numero ? 'https://wa.me/' + numero : 'https://wa.me/';
+              window.open(base + '?text=' + encodeURIComponent(texto), '_blank');
+            });
+          });
         }
         paintWeek();
       }
@@ -390,7 +495,7 @@ exports.handler = async (event) => {
               const res = await fetch('/app/plano-unpin', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ puntoId })
+                body: JSON.stringify({ proyectoId: PROYECTO_ID, puntoId })
               });
               const body = await res.json().catch(() => ({}));
               if (!res.ok) throw new Error((body.error || 'Error del servidor') + (body.debug ? ' — ' + body.debug : ''));
@@ -429,7 +534,7 @@ exports.handler = async (event) => {
             const res = await fetch('/app/plano-pin', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ puntoId, x, y })
+              body: JSON.stringify({ proyectoId: PROYECTO_ID, puntoId, x, y })
             });
             const body = await res.json().catch(() => ({}));
             if (!res.ok) throw new Error((body.error || 'Error del servidor') + (body.debug ? ' — ' + body.debug : ''));
@@ -479,17 +584,22 @@ exports.handler = async (event) => {
           const res = await fetch('/app/plano-pin', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ puntoId: puntoId || null, nombre: nombre || null, x: pendingCoords.x, y: pendingCoords.y })
+            body: JSON.stringify({ proyectoId: PROYECTO_ID, puntoId: puntoId || null, nombre: nombre || null, x: pendingCoords.x, y: pendingCoords.y })
           });
           const body = await res.json().catch(() => ({}));
           if (!res.ok) throw new Error((body.error || 'Error del servidor') + (body.debug ? ' — ' + body.debug : ''));
-          window.location.href = '/app/plano';
+          window.location.href = '/app/plano?proyecto=' + encodeURIComponent(PROYECTO_ID);
         } catch (err) {
           pickerStatus.className = 'status status--error';
           pickerStatus.textContent = err.message || 'No se pudo guardar.';
           confirmPin.disabled = false;
         }
       });
+
+      const initialPunto = new URLSearchParams(window.location.search).get('punto');
+      if (initialPunto && PUNTOS_DATA.find(p => p.id === initialPunto)) {
+        renderDetail(initialPunto);
+      }
     </script>
   `;
 

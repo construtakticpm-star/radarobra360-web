@@ -26,14 +26,45 @@ function mediaStore() {
 }
 
 function emptyData() {
-  return { puntos: [], plano: null };
+  return { proyectos: [], usuarios: [] };
+}
+
+function slugify(str) {
+  return String(str)
+    .toLowerCase()
+    .normalize("NFD").replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "") || Math.random().toString(36).slice(2, 10);
 }
 
 async function getData() {
   try {
     const store = dataStore();
     const existing = await store.get(DATA_KEY, { type: "json" });
-    if (existing) return existing;
+    if (existing) {
+      if (Array.isArray(existing.proyectos)) {
+        // Backfill usuarios[] for data saved before this field existed.
+        if (!Array.isArray(existing.usuarios)) {
+          existing.usuarios = [];
+          await saveData(existing);
+        }
+        return existing;
+      }
+      // Legacy single-project shape { puntos, plano } -> wrap as the first
+      // proyecto so nothing already uploaded gets lost when multi-proyecto
+      // support rolls out.
+      const migrated = {
+        proyectos: [{
+          id: "obra-1",
+          nombre: "Obra 1",
+          puntos: existing.puntos || [],
+          plano: existing.plano || null
+        }],
+        usuarios: []
+      };
+      await saveData(migrated);
+      return migrated;
+    }
   } catch (e) {
     // Degrade to an empty board instead of crashing the page.
   }
@@ -43,6 +74,14 @@ async function getData() {
 async function saveData(data) {
   const store = dataStore();
   await store.setJSON(DATA_KEY, data);
+}
+
+function findProyecto(data, proyectoId) {
+  return (data.proyectos || []).find(p => p.id === proyectoId);
+}
+
+function findUsuario(data, usuarioId) {
+  return (data.usuarios || []).find(u => u.id === usuarioId);
 }
 
 async function saveMedia(id, base64, contentType) {
@@ -61,4 +100,9 @@ async function getMedia(id) {
   };
 }
 
-module.exports = { getData, saveData, saveMedia, getMedia };
+async function deleteMedia(id) {
+  const store = mediaStore();
+  await store.delete(id);
+}
+
+module.exports = { getData, saveData, saveMedia, getMedia, deleteMedia, findProyecto, findUsuario, slugify };

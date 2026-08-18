@@ -112,6 +112,10 @@ textarea{resize:vertical;}
   margin-top:2px;background:rgba(8,18,33,0.85);color:#fff;font-size:0.68rem;font-weight:700;
   padding:2px 8px;border-radius:999px;white-space:nowrap;
 }
+.pin__responsable{
+  margin-top:2px;background:rgba(255,255,255,0.92);color:var(--navy);font-size:0.6rem;font-weight:700;
+  padding:1px 7px;border-radius:999px;white-space:nowrap;
+}
 .pin--estatus-pendiente .pin__dot{background:#94a3b8;}
 .pin--estatus-en-proceso .pin__dot{background:var(--amber);}
 .plano-stage.moving{cursor:cell;}

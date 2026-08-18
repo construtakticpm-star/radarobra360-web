@@ -106,11 +106,28 @@ exports.handler = async (event) => {
     return (ultimo && ultimo.estatus) || "pendiente";
   }
 
-  const pinsHtml = placed.map(p => `
+  // Leyenda de responsable bajo el pin: solo cuando el frente está "en
+  // proceso" (muestra el nombre) o no tiene responsable asignado (muestra
+  // "Sin asignar"). Un frente "pendiente" con responsable ya asignado no
+  // necesita leyenda todavía.
+  function responsableLegend(p) {
+    const ultimo = p.registros && p.registros[0];
+    const est = (ultimo && ultimo.estatus) || "pendiente";
+    const responsable = ultimo && ultimo.responsableId ? usuarios.find(u => u.id === ultimo.responsableId) : null;
+    if (!responsable) return "Sin asignar";
+    if (est === "en-proceso") return responsable.nombre;
+    return null;
+  }
+
+  const pinsHtml = placed.map(p => {
+    const legend = responsableLegend(p);
+    return `
     <button type="button" class="pin pin--estatus-${esc(estatusDe(p))}" data-punto-id="${esc(p.id)}" style="left:${p.x}%; top:${p.y}%;" title="${esc(p.nombre)}">
       <span class="pin__dot"></span>
       <span class="pin__label">${esc(p.nombre)}</span>
-    </button>`).join("");
+      ${legend ? `<span class="pin__responsable">${esc(legend)}</span>` : ""}
+    </button>`;
+  }).join("");
 
   const unplacedOptionsHtml = unplaced.map(p => `<option value="${esc(p.id)}">${esc(p.nombre)}</option>`).join("");
 

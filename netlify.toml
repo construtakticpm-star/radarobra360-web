@@ -18,6 +18,16 @@
   status = 200
 
 [[redirects]]
+  from = "/app/contacto"
+  to = "/.netlify/functions/app-contacto"
+  status = 200
+
+[[redirects]]
+  from = "/app/sugerencia-crear"
+  to = "/.netlify/functions/app-sugerencia-crear"
+  status = 200
+
+[[redirects]]
   from = "/app/usuario-crear"
   to = "/.netlify/functions/app-usuario-crear"
   status = 200

@@ -26,7 +26,7 @@ function mediaStore() {
 }
 
 function emptyData() {
-  return { proyectos: [], usuarios: [] };
+  return { proyectos: [], usuarios: [], sugerencias: [] };
 }
 
 function slugify(str) {
@@ -43,11 +43,11 @@ async function getData() {
     const existing = await store.get(DATA_KEY, { type: "json" });
     if (existing) {
       if (Array.isArray(existing.proyectos)) {
-        // Backfill usuarios[] for data saved before this field existed.
-        if (!Array.isArray(existing.usuarios)) {
-          existing.usuarios = [];
-          await saveData(existing);
-        }
+        // Backfill fields saved before this app version existed.
+        let changed = false;
+        if (!Array.isArray(existing.usuarios)) { existing.usuarios = []; changed = true; }
+        if (!Array.isArray(existing.sugerencias)) { existing.sugerencias = []; changed = true; }
+        if (changed) await saveData(existing);
         return existing;
       }
       // Legacy single-project shape { puntos, plano } -> wrap as the first
@@ -60,7 +60,8 @@ async function getData() {
           puntos: existing.puntos || [],
           plano: existing.plano || null
         }],
-        usuarios: []
+        usuarios: [],
+        sugerencias: []
       };
       await saveData(migrated);
       return migrated;

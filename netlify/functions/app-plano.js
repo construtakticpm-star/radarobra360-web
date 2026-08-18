@@ -101,9 +101,11 @@ exports.handler = async (event) => {
   const unplaced = puntos.filter(p => p.x == null || p.y == null);
   const usuarios = data.usuarios || [];
 
-  function estatusDe(p) {
+  // El pin se pinta según si el frente tiene responsable asignado en su
+  // registro más reciente, no según su estatus.
+  function asignadoDe(p) {
     const ultimo = p.registros && p.registros[0];
-    return (ultimo && ultimo.estatus) || "pendiente";
+    return !!(ultimo && ultimo.responsableId);
   }
 
   // Leyenda de responsable bajo el pin: todos los responsables distintos
@@ -127,7 +129,7 @@ exports.handler = async (event) => {
   const pinsHtml = placed.map(p => {
     const legend = responsableLegend(p);
     return `
-    <button type="button" class="pin pin--estatus-${esc(estatusDe(p))}" data-punto-id="${esc(p.id)}" style="left:${p.x}%; top:${p.y}%;" title="${esc(p.nombre)}">
+    <button type="button" class="pin pin--${asignadoDe(p) ? "asignado" : "sin-asignar"}" data-punto-id="${esc(p.id)}" style="left:${p.x}%; top:${p.y}%;" title="${esc(p.nombre)}">
       <span class="pin__dot"></span>
       <span class="pin__label">${esc(p.nombre)}</span>
       ${legend ? `<span class="pin__responsable">${esc(legend)}</span>` : ""}
@@ -645,7 +647,7 @@ exports.handler = async (event) => {
           existingPinEl.style.left = x + '%';
           existingPinEl.style.top = y + '%';
         } else {
-          const pinHtml = '<button type="button" class="pin pin--estatus-pendiente" data-punto-id="' + escHtml(id) + '" style="left:' + x + '%; top:' + y + '%;" title="' + escHtml(nombre) + '">'
+          const pinHtml = '<button type="button" class="pin pin--sin-asignar" data-punto-id="' + escHtml(id) + '" style="left:' + x + '%; top:' + y + '%;" title="' + escHtml(nombre) + '">'
             + '<span class="pin__dot"></span>'
             + '<span class="pin__label">' + escHtml(nombre) + '</span>'
             + '<span class="pin__responsable">Sin asignar</span>'

@@ -147,8 +147,8 @@ textarea{resize:vertical;}
   background:none;border:none;padding:0;cursor:pointer;
 }
 .pin__dot{
-  width:14px;height:14px;border-radius:0;transform:rotate(45deg);
-  background:var(--cyan);border:2px solid var(--cream);box-shadow:0 2px 6px rgba(0,0,0,0.5);
+  width:14px;height:14px;border-radius:50%;
+  background:#8a939c;border:2px solid var(--cream);box-shadow:0 2px 6px rgba(0,0,0,0.5);
 }
 .pin__label{
   margin-top:2px;background:rgba(13,22,34,0.85);color:#fff;font-size:0.68rem;font-weight:700;
@@ -158,13 +158,12 @@ textarea{resize:vertical;}
   margin-top:2px;background:rgba(255,255,255,0.92);color:var(--navy);font-size:0.6rem;font-weight:700;
   padding:1px 7px;border-radius:8px;white-space:nowrap;
 }
-.pin--estatus-pendiente .pin__dot{background:#a39a6b;}
-.pin--estatus-en-proceso .pin__dot{background:var(--amber);}
+.pin--asignado .pin__dot{background:var(--cyan);}
 .plano-stage.moving{cursor:cell;}
 .plano-stage.removing{cursor:not-allowed;}
 .pin--moving .pin__dot{background:#fff;box-shadow:0 0 0 4px rgba(15,155,142,0.55),0 2px 6px rgba(0,0,0,0.4);animation:pin-pulse 1s ease-in-out infinite;}
 .pin--moving .pin__label{background:var(--cyan);color:#04141f;}
-@keyframes pin-pulse{0%,100%{transform:rotate(45deg) scale(1);}50%{transform:rotate(45deg) scale(1.3);}}
+@keyframes pin-pulse{0%,100%{transform:scale(1);}50%{transform:scale(1.3);}}
 .unplaced-panel{margin-top:24px;}
 .unplaced-gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px;margin-bottom:18px;}
 .unplaced-card{display:flex;flex-direction:column;gap:8px;}

@@ -1,9 +1,11 @@
 const { checkAuth } = require("./lib/auth");
 const { getData } = require("./lib/store");
-const { esc, shell, topbar } = require("./lib/ui");
+const { esc, shell, topbar, lightboxMarkup, lightboxScript } = require("./lib/ui");
 
 function renderMedia(reg) {
-  const fotos = (reg.fotos || []).map(id => `<img src="/app/media?id=${esc(id)}" alt="Foto">`).join("");
+  const fotos = (reg.fotos || [])
+    .map(id => `<img src="/app/media?id=${esc(id)}" alt="Foto" class="lightbox-trigger" data-media-id="${esc(id)}">`)
+    .join("");
   const video = reg.video
     ? `<video controls preload="metadata" src="/app/media?id=${esc(reg.video)}"></video>`
     : "";
@@ -47,6 +49,11 @@ exports.handler = async (event) => {
       <p class="lead">${registros.length} registro${registros.length === 1 ? "" : "s"}, del más reciente al más antiguo.</p>
       ${registrosHtml}
     </div>
+    ${lightboxMarkup()}
+    <script>
+      ${lightboxScript()}
+      attachLightbox(document);
+    </script>
   `;
 
   return {

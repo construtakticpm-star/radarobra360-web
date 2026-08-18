@@ -46,6 +46,19 @@ p.lead{color:var(--muted);margin-bottom:28px;}
 .registro__media{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;}
 .registro__media img,.registro__media video{width:100%;aspect-ratio:1;object-fit:cover;border-radius:10px;background:#000;}
 .registro__media video{aspect-ratio:16/9;object-fit:contain;}
+.registro__media img{cursor:zoom-in;}
+
+.lightbox{position:fixed;inset:0;background:rgba(4,10,18,0.94);z-index:200;display:none;align-items:center;justify-content:center;padding:50px;}
+.lightbox.lightbox--open{display:flex;}
+.lightbox__img{max-width:90vw;max-height:82vh;border-radius:8px;box-shadow:0 20px 60px rgba(0,0,0,0.5);}
+.lightbox__close{position:absolute;top:18px;right:22px;background:rgba(255,255,255,0.1);border:none;color:#fff;font-size:1.3rem;width:40px;height:40px;border-radius:50%;cursor:pointer;line-height:1;}
+.lightbox__close:hover{background:rgba(255,255,255,0.2);}
+.lightbox__nav{position:absolute;top:50%;transform:translateY(-50%);background:rgba(255,255,255,0.1);border:none;color:#fff;font-size:1.8rem;width:48px;height:48px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.lightbox__nav:hover{background:rgba(255,255,255,0.2);}
+.lightbox__nav--prev{left:16px;}
+.lightbox__nav--next{right:16px;}
+.lightbox__count{position:absolute;bottom:18px;left:50%;transform:translateX(-50%);color:rgba(255,255,255,0.7);font-size:0.8rem;}
+@media (max-width:640px){.lightbox{padding:16px;}.lightbox__nav{width:40px;height:40px;font-size:1.4rem;}}
 
 label{display:block;font-size:0.82rem;font-weight:700;color:var(--navy);margin-bottom:6px;margin-top:16px;}
 input,select,textarea{width:100%;border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-family:inherit;font-size:0.92rem;background:#fff;}
@@ -136,4 +149,78 @@ function topbar() {
   </header>`;
 }
 
-module.exports = { esc, shell, topbar };
+// Full-screen photo viewer with prev/next. Shared markup + script so every
+// page that renders .registro__media photos gets the same behavior: click a
+// photo -> open it enlarged, arrows (or ←/→ keys) move through the photos
+// currently on screen. Videos keep their own native controls, not included.
+function lightboxMarkup() {
+  return `
+    <div class="lightbox" id="lightbox">
+      <button type="button" class="lightbox__close" id="lightboxClose" aria-label="Cerrar">✕</button>
+      <button type="button" class="lightbox__nav lightbox__nav--prev" id="lightboxPrev" aria-label="Anterior">‹</button>
+      <img class="lightbox__img" id="lightboxImg" src="" alt="Foto ampliada">
+      <button type="button" class="lightbox__nav lightbox__nav--next" id="lightboxNext" aria-label="Siguiente">›</button>
+      <div class="lightbox__count" id="lightboxCount"></div>
+    </div>`;
+}
+
+function lightboxScript() {
+  return `
+    (function () {
+      const lightbox = document.getElementById('lightbox');
+      const lightboxImg = document.getElementById('lightboxImg');
+      const lightboxClose = document.getElementById('lightboxClose');
+      const lightboxPrev = document.getElementById('lightboxPrev');
+      const lightboxNext = document.getElementById('lightboxNext');
+      const lightboxCount = document.getElementById('lightboxCount');
+      let galleryIds = [];
+      let galleryIndex = 0;
+
+      function showLightboxImage() {
+        lightboxImg.src = '/app/media?id=' + galleryIds[galleryIndex];
+        lightboxCount.textContent = (galleryIndex + 1) + ' / ' + galleryIds.length;
+        const multi = galleryIds.length > 1;
+        lightboxPrev.style.display = multi ? 'flex' : 'none';
+        lightboxNext.style.display = multi ? 'flex' : 'none';
+      }
+
+      window.openLightbox = function (ids, index) {
+        galleryIds = ids;
+        galleryIndex = index;
+        showLightboxImage();
+        lightbox.classList.add('lightbox--open');
+      };
+
+      function closeLightbox() { lightbox.classList.remove('lightbox--open'); }
+
+      lightboxClose.addEventListener('click', closeLightbox);
+      lightbox.addEventListener('click', function (e) { if (e.target === lightbox) closeLightbox(); });
+      lightboxPrev.addEventListener('click', function () {
+        galleryIndex = (galleryIndex - 1 + galleryIds.length) % galleryIds.length;
+        showLightboxImage();
+      });
+      lightboxNext.addEventListener('click', function () {
+        galleryIndex = (galleryIndex + 1) % galleryIds.length;
+        showLightboxImage();
+      });
+      document.addEventListener('keydown', function (e) {
+        if (!lightbox.classList.contains('lightbox--open')) return;
+        if (e.key === 'Escape') closeLightbox();
+        if (e.key === 'ArrowLeft') lightboxPrev.click();
+        if (e.key === 'ArrowRight') lightboxNext.click();
+      });
+
+      window.attachLightbox = function (container) {
+        (container || document).querySelectorAll('.lightbox-trigger').forEach(function (img) {
+          img.addEventListener('click', function () {
+            const all = Array.prototype.slice.call((container || document).querySelectorAll('.lightbox-trigger'));
+            const ids = all.map(function (el) { return el.dataset.mediaId; });
+            window.openLightbox(ids, all.indexOf(img));
+          });
+        });
+      };
+    })();
+  `;
+}
+
+module.exports = { esc, shell, topbar, lightboxMarkup, lightboxScript };

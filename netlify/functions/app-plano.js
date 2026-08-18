@@ -1,6 +1,6 @@
 const { checkAuth } = require("./lib/auth");
 const { getData } = require("./lib/store");
-const { esc, shell, topbar } = require("./lib/ui");
+const { esc, shell, topbar, lightboxMarkup, lightboxScript } = require("./lib/ui");
 
 exports.handler = async (event) => {
   const auth = checkAuth(event);
@@ -157,7 +157,11 @@ exports.handler = async (event) => {
       </div>
     </div>
 
+    ${lightboxMarkup()}
+
     <script>
+      ${lightboxScript()}
+
       const PUNTOS_DATA = ${puntosDataJson};
 
       const stage = document.getElementById('stage');
@@ -185,7 +189,7 @@ exports.handler = async (event) => {
       function mediaTag(id, isVideo) {
         return isVideo
           ? '<video controls preload="metadata" src="/app/media?id=' + id + '"></video>'
-          : '<img src="/app/media?id=' + id + '" alt="Foto">';
+          : '<img src="/app/media?id=' + id + '" alt="Foto" class="lightbox-trigger" data-media-id="' + id + '">';
       }
 
       function fileToBase64(file) {
@@ -310,6 +314,8 @@ exports.handler = async (event) => {
               paintWeek();
             });
           });
+
+          attachLightbox(detailRegistros);
         }
         paintWeek();
       }

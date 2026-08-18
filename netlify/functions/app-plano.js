@@ -217,8 +217,8 @@ exports.handler = async (event) => {
     ${topbar(proyectoId, proyecto.nombre)}
     <div class="wrap wrap--wide">
       <div class="control-console">
-        <p class="eyebrow">Mando de dirección · ${esc(proyecto.nombre)}</p>
-        <h1>Mando de dirección</h1>
+        <p class="eyebrow">Mando de RadarObra360 · ${esc(proyecto.nombre)}</p>
+        <h1>Mando de RadarObra360</h1>
         <p class="lead">Click en un pin para ver sus fotos y video sin salir del plano. Los frentes en estatus "Listo" se quitan de esta vista automáticamente.</p>
 
         <div class="plano-toolbar">
@@ -894,6 +894,6 @@ exports.handler = async (event) => {
   return {
     statusCode: 200,
     headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store, private", "X-Robots-Tag": "noindex, nofollow" },
-    body: shell("Mando de dirección", body, "radar-bg")
+    body: shell("Mando de RadarObra360", body, "radar-bg")
   };
 };

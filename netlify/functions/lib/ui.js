@@ -186,11 +186,11 @@ textarea{resize:vertical;}
 .card::before,.registro::before,.plano-detail::before{top:-4px;left:-4px;border-top:4px solid var(--cyan);border-left:4px solid var(--cyan);border-radius:6px 0 0 0;}
 .card::after,.registro::after,.plano-detail::after{bottom:-4px;right:-4px;border-bottom:4px solid var(--cyan);border-right:4px solid var(--cyan);border-radius:0 0 6px 0;}
 .plano-detail__empty{color:var(--muted);font-size:0.9rem;text-align:center;padding:30px 20px;}
-.plano-detail__titlebar{position:sticky;top:0;z-index:1;background:linear-gradient(160deg,var(--navy),var(--navy-deep));border-radius:14px 14px 0 0;padding:18px 20px;}
+.plano-detail__titlebar{position:sticky;top:0;z-index:1;display:flex;align-items:center;flex-wrap:wrap;gap:10px;background:linear-gradient(160deg,var(--navy),var(--navy-deep));border-radius:14px 14px 0 0;padding:18px 20px;}
 .plano-detail__titlebar h2{color:#fff;font-size:1.25rem;font-weight:700;margin:0;}
 .plano-detail__body{padding:18px 20px 20px;}
 .plano-detail__actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px;}
-.plano-detail__responsable{display:inline-flex;align-items:center;font-size:0.8rem;font-weight:600;color:var(--navy);background:var(--cream);border-radius:999px;padding:5px 14px;margin-bottom:16px;}
+.plano-detail__responsable{display:inline-flex;align-items:center;font-size:0.76rem;font-weight:600;color:#fff;background:rgba(255,255,255,0.14);border-radius:999px;padding:4px 13px;}
 .plano-detail__tags{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:12px;}
 .tag-chip{display:inline-block;font-family:var(--font);font-size:0.72rem;font-weight:500;padding:4px 11px;border-radius:999px;white-space:nowrap;}
 .tag-add{display:inline-flex;align-items:center;gap:2px;}
@@ -224,6 +224,7 @@ textarea{resize:vertical;}
   .plano-detail{position:static;max-height:none;overflow:visible;border:none;padding:0;box-shadow:none;}
   .plano-detail__titlebar{background:none;padding:0 0 10px;}
   .plano-detail__titlebar h2{color:var(--navy);}
+  .plano-detail__responsable{color:var(--navy);background:var(--cream);}
   .registro{break-inside:avoid;border:1px solid #ccc;box-shadow:none;}
   .registro__media img,.registro__media video{break-inside:avoid;}
 }

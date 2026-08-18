@@ -82,6 +82,11 @@
   to = "/.netlify/functions/app-plano-unpin"
   status = 200
 
+[[redirects]]
+  from = "/app/plano-tag"
+  to = "/.netlify/functions/app-plano-tag"
+  status = 200
+
 # Block direct static access to function source.
 [[redirects]]
   from = "/netlify/*"

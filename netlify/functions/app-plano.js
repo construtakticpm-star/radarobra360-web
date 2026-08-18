@@ -248,6 +248,7 @@ exports.handler = async (event) => {
           <div class="plano-detail__content" id="detailContent" style="display:none;">
             <div class="plano-detail__titlebar">
               <h2 id="detailName"></h2>
+              <span class="plano-detail__responsable" id="detailResponsable"></span>
             </div>
             <div class="plano-detail__body">
               <div class="plano-detail__actions">
@@ -261,7 +262,6 @@ exports.handler = async (event) => {
                 <a id="detailAddLink" class="btn btn--primary btn--small" href="#">＋ Agregar aquí</a>
               </div>
               <div class="plano-detail__tags" id="detailTags"></div>
-              <p class="plano-detail__responsable" id="detailResponsable"></p>
 
               <div id="detailRegistros"></div>
             </div>

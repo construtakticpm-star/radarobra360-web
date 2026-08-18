@@ -598,7 +598,7 @@ exports.handler = async (event) => {
         placeHint.textContent = removing ? 'Modo eliminar: haz click en el pin que quieres quitar del mapa.' : '';
       });
 
-      document.querySelectorAll('.pin').forEach(el => {
+      function attachPinHandler(el) {
         el.addEventListener('click', async (e) => {
           e.stopPropagation();
 
@@ -637,7 +637,9 @@ exports.handler = async (event) => {
           }
           renderDetail(el.dataset.puntoId);
         });
-      });
+      }
+
+      document.querySelectorAll('.pin').forEach(attachPinHandler);
 
       stage.addEventListener('click', async (e) => {
         if (moving && movingPuntoId) {
@@ -705,9 +707,42 @@ exports.handler = async (event) => {
           });
           const body = await res.json().catch(() => ({}));
           if (!res.ok) throw new Error((body.error || 'Error del servidor') + (body.debug ? ' — ' + body.debug : ''));
-          // Colocar el punto solo lo refleja en el plano. Abrir su registro
-          // es un paso aparte: hay que darle click al pin.
-          window.location.href = '/app/plano?proyecto=' + encodeURIComponent(PROYECTO_ID);
+
+          // Refleja el pin al instante en el plano, sin esperar una recarga
+          // (evita depender de que el guardado ya haya propagado). Abrir su
+          // registro sigue siendo un paso aparte: hay que darle click al pin.
+          let punto = PUNTOS_DATA.find(p => p.id === body.id);
+          if (!punto) {
+            punto = { id: body.id, nombre: body.nombre, registros: [], estatusActual: 'pendiente', responsableActualId: null };
+            PUNTOS_DATA.push(punto);
+          }
+
+          const existingPinEl = document.querySelector('.pin[data-punto-id="' + body.id + '"]');
+          if (existingPinEl) {
+            existingPinEl.style.left = pendingCoords.x + '%';
+            existingPinEl.style.top = pendingCoords.y + '%';
+          } else {
+            const pinHtml = '<button type="button" class="pin pin--estatus-pendiente" data-punto-id="' + escHtml(body.id) + '" style="left:' + pendingCoords.x + '%; top:' + pendingCoords.y + '%;" title="' + escHtml(body.nombre) + '">'
+              + '<span class="pin__dot"></span>'
+              + '<span class="pin__label">' + escHtml(body.nombre) + '</span>'
+              + '<span class="pin__responsable">Sin asignar</span>'
+              + '</button>';
+            stage.insertAdjacentHTML('beforeend', pinHtml);
+            attachPinHandler(stage.querySelector('.pin[data-punto-id="' + body.id + '"]'));
+          }
+
+          const unplacedOption = existente.querySelector('option[value="' + body.id + '"]');
+          if (unplacedOption) unplacedOption.remove();
+          const unplacedBtn = document.querySelector('.unplaced-item [data-punto-id="' + body.id + '"]');
+          const unplacedItem = unplacedBtn ? unplacedBtn.closest('.unplaced-item') : null;
+          if (unplacedItem) unplacedItem.remove();
+
+          picker.style.display = 'none';
+          pendingCoords = null;
+          existente.value = '';
+          nuevoNombre.value = '';
+          pickerStatus.textContent = '';
+          confirmPin.disabled = false;
         } catch (err) {
           pickerStatus.className = 'status status--error';
           pickerStatus.textContent = err.message || 'No se pudo guardar.';

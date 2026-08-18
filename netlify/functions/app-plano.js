@@ -90,12 +90,24 @@ exports.handler = async (event) => {
   }
 
   // ---------- Plano exists: interactive map ----------
-  const puntos = proyecto.puntos || [];
+  // Un frente cuyo registro más reciente quedó en estatus "listo" se
+  // considera cerrado y desaparece de esta vista (sigue existiendo, solo
+  // ya no se muestra aquí — ver /app/punto para su historial completo).
+  const puntos = (proyecto.puntos || []).filter(p => {
+    const ultimo = p.registros && p.registros[0];
+    return !ultimo || ultimo.estatus !== "listo";
+  });
   const placed = puntos.filter(p => p.x != null && p.y != null);
   const unplaced = puntos.filter(p => p.x == null || p.y == null);
+  const usuarios = data.usuarios || [];
+
+  function estatusDe(p) {
+    const ultimo = p.registros && p.registros[0];
+    return (ultimo && ultimo.estatus) || "pendiente";
+  }
 
   const pinsHtml = placed.map(p => `
-    <button type="button" class="pin" data-punto-id="${esc(p.id)}" style="left:${p.x}%; top:${p.y}%;" title="${esc(p.nombre)}">
+    <button type="button" class="pin pin--estatus-${esc(estatusDe(p))}" data-punto-id="${esc(p.id)}" style="left:${p.x}%; top:${p.y}%;" title="${esc(p.nombre)}">
       <span class="pin__dot"></span>
       <span class="pin__label">${esc(p.nombre)}</span>
     </button>`).join("");
@@ -108,21 +120,28 @@ exports.handler = async (event) => {
       ${unplaced.map(p => `<div class="unplaced-item">${esc(p.nombre)} — <button type="button" class="linklike" data-punto-id="${esc(p.id)}">ver fotos</button></div>`).join("")}
     </div>` : "";
 
+  const responsableOptionsHtml = usuarios.map(u => `<option value="${esc(u.id)}">${esc(u.nombre)}</option>`).join("");
+
   // Full punto data (incl. registros/fotos/video ids) embedded so clicking a
   // pin renders instantly, no extra round trip to fetch each punto.
   // `<` is escaped to < so a nota/nombre containing "</script>" can't
   // break out of the <script> tag this gets embedded in below.
-  const puntosDataJson = JSON.stringify(puntos.map(p => ({
-    id: p.id, nombre: p.nombre, registros: p.registros || []
-  }))).replace(/</g, "\\u003c");
-  const usuariosDataJson = JSON.stringify(data.usuarios || []).replace(/</g, "\\u003c");
+  const puntosDataJson = JSON.stringify(puntos.map(p => {
+    const ultimo = p.registros && p.registros[0];
+    return {
+      id: p.id, nombre: p.nombre, registros: p.registros || [],
+      estatusActual: (ultimo && ultimo.estatus) || "pendiente",
+      responsableActualId: (ultimo && ultimo.responsableId) || null
+    };
+  })).replace(/</g, "\\u003c");
+  const usuariosDataJson = JSON.stringify(usuarios).replace(/</g, "\\u003c");
 
   const body = `
     ${topbar(proyectoId, proyecto.nombre)}
     <div class="wrap wrap--wide">
-      <p class="eyebrow">Plano de obra · ${esc(proyecto.nombre)}</p>
-      <h1>Plano + fotos</h1>
-      <p class="lead">Click en un pin para ver sus fotos y video sin salir del plano. "Colocar punto" para agregar uno nuevo.</p>
+      <p class="eyebrow">Visual de RadarObra360 · ${esc(proyecto.nombre)}</p>
+      <h1>Visual de RadarObra360</h1>
+      <p class="lead">Click en un pin para ver sus fotos y video sin salir del plano. Los frentes en estatus "Listo" se quitan de esta vista automáticamente.</p>
 
       <div class="plano-toolbar">
         <button class="btn btn--primary" id="placeBtn">📍 Colocar punto</button>
@@ -154,6 +173,22 @@ exports.handler = async (event) => {
                 <a id="detailAddLink" class="btn btn--primary btn--small" href="#">＋ Agregar aquí</a>
               </div>
             </div>
+            <p class="plano-detail__responsable" id="detailResponsable"></p>
+
+            <div class="quick-estatus">
+              <select id="quickEstatus">
+                <option value="pendiente">Pendiente</option>
+                <option value="en-proceso">En proceso</option>
+                <option value="listo">Listo</option>
+              </select>
+              <select id="quickResponsable">
+                <option value="">— Sin asignar —</option>
+                ${responsableOptionsHtml}
+              </select>
+              <button type="button" class="btn btn--primary btn--small" id="quickEstatusSave">Guardar estatus</button>
+              <span class="status" id="quickEstatusStatus"></span>
+            </div>
+
             <div id="detailRegistros"></div>
           </div>
         </div>
@@ -205,10 +240,48 @@ exports.handler = async (event) => {
       const detailEmpty = document.getElementById('detailEmpty');
       const detailContent = document.getElementById('detailContent');
       const detailName = document.getElementById('detailName');
+      const detailResponsable = document.getElementById('detailResponsable');
       const detailAddLink = document.getElementById('detailAddLink');
       const detailRegistros = document.getElementById('detailRegistros');
       const exportBtn = document.getElementById('exportBtn');
       const shareBtn = document.getElementById('shareBtn');
+      const quickEstatus = document.getElementById('quickEstatus');
+      const quickResponsable = document.getElementById('quickResponsable');
+      const quickEstatusSave = document.getElementById('quickEstatusSave');
+      const quickEstatusStatus = document.getElementById('quickEstatusStatus');
+      let currentPuntoId = null;
+
+      quickEstatusSave.addEventListener('click', async () => {
+        if (!currentPuntoId) return;
+        const punto = PUNTOS_DATA.find(p => p.id === currentPuntoId);
+        if (!punto) return;
+        quickEstatusSave.disabled = true;
+        quickEstatusStatus.className = 'status';
+        quickEstatusStatus.textContent = 'Guardando...';
+        try {
+          const res = await fetch('/app/submit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              proyectoId: PROYECTO_ID,
+              punto: punto.nombre,
+              fecha: new Date().toISOString().slice(0, 10),
+              nota: '',
+              estatus: quickEstatus.value,
+              responsableId: quickResponsable.value || null,
+              fotos: [],
+              video: null
+            })
+          });
+          const body = await res.json().catch(() => ({}));
+          if (!res.ok) throw new Error((body.error || 'Error del servidor') + (body.debug ? ' — ' + body.debug : ''));
+          window.location.href = '/app/plano?proyecto=' + encodeURIComponent(PROYECTO_ID);
+        } catch (err) {
+          quickEstatusStatus.className = 'status status--error';
+          quickEstatusStatus.textContent = err.message || 'No se pudo guardar.';
+          quickEstatusSave.disabled = false;
+        }
+      });
 
       exportBtn.addEventListener('click', () => window.print());
       shareBtn.addEventListener('click', () => {
@@ -337,6 +410,8 @@ exports.handler = async (event) => {
         const punto = PUNTOS_DATA.find(p => p.id === puntoId);
         if (!punto) return;
 
+        currentPuntoId = puntoId;
+
         if (window.history && window.history.replaceState) {
           const url = '/app/plano?proyecto=' + encodeURIComponent(PROYECTO_ID) + '&punto=' + encodeURIComponent(puntoId);
           window.history.replaceState(null, '', url);
@@ -348,6 +423,12 @@ exports.handler = async (event) => {
         detailContent.style.display = 'block';
         detailName.textContent = punto.nombre;
         detailAddLink.href = '/app/registrar?proyecto=' + encodeURIComponent(PROYECTO_ID) + '&punto=' + encodeURIComponent(punto.nombre);
+
+        const responsableActual = punto.responsableActualId ? USUARIOS_DATA.find(u => u.id === punto.responsableActualId) : null;
+        detailResponsable.textContent = responsableActual ? '👤 ' + responsableActual.nombre : 'Abierto';
+        quickEstatus.value = punto.estatusActual || 'pendiente';
+        quickResponsable.value = punto.responsableActualId || '';
+        quickEstatusStatus.textContent = '';
 
         if (!punto.registros.length) {
           detailRegistros.innerHTML = '<div class="empty">Sin registros todavía. <a href="' + detailAddLink.href + '" style="color:var(--cyan);">Agregar el primero</a></div>';
@@ -606,6 +687,6 @@ exports.handler = async (event) => {
   return {
     statusCode: 200,
     headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store, private", "X-Robots-Tag": "noindex, nofollow" },
-    body: shell("Plano interactivo", body)
+    body: shell("Visual de RadarObra360", body)
   };
 };

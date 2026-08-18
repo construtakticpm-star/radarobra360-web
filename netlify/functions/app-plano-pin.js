@@ -21,14 +21,14 @@ exports.handler = async (event) => {
     return { statusCode: 400, headers: { "Content-Type": "application/json" }, body: JSON.stringify({ error: "Faltan datos" }) };
   }
 
+  let punto;
+
   try {
     const data = await getData();
     const proyecto = findProyecto(data, proyectoId);
     if (!proyecto) {
       return { statusCode: 404, headers: { "Content-Type": "application/json" }, body: JSON.stringify({ error: "Proyecto no encontrado" }) };
     }
-
-    let punto;
 
     if (puntoId) {
       punto = proyecto.puntos.find(p => p.id === puntoId);
@@ -56,5 +56,5 @@ exports.handler = async (event) => {
     };
   }
 
-  return { statusCode: 200, headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ok: true }) };
+  return { statusCode: 200, headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ok: true, id: punto.id, nombre: punto.nombre }) };
 };

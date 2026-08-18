@@ -85,7 +85,7 @@ exports.handler = async (event) => {
     return {
       statusCode: 200,
       headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store, private", "X-Robots-Tag": "noindex, nofollow" },
-      body: shell("Subir plano", body)
+      body: shell("Subir plano", body, "radar-bg")
     };
   }
 
@@ -705,7 +705,9 @@ exports.handler = async (event) => {
           });
           const body = await res.json().catch(() => ({}));
           if (!res.ok) throw new Error((body.error || 'Error del servidor') + (body.debug ? ' — ' + body.debug : ''));
-          window.location.href = '/app/plano?proyecto=' + encodeURIComponent(PROYECTO_ID);
+          // Después de colocar el punto y que se refleje en el plano, abre
+          // directo su panel de detalle para registrar sus datos.
+          window.location.href = '/app/plano?proyecto=' + encodeURIComponent(PROYECTO_ID) + '&punto=' + encodeURIComponent(body.id);
         } catch (err) {
           pickerStatus.className = 'status status--error';
           pickerStatus.textContent = err.message || 'No se pudo guardar.';
@@ -723,6 +725,6 @@ exports.handler = async (event) => {
   return {
     statusCode: 200,
     headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store, private", "X-Robots-Tag": "noindex, nofollow" },
-    body: shell("Visual de RadarObra360", body)
+    body: shell("Visual de RadarObra360", body, "radar-bg")
   };
 };

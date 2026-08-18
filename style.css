@@ -33,6 +33,7 @@ a{color:inherit;}
 .nav__logo-mark{font-size:1.3rem;color:var(--cyan);}
 .nav__brand-text{font-weight:800;font-size:1rem;letter-spacing:0.02em;}
 .nav__brand-360{color:var(--cyan);}
+.nav__brand-version{color:var(--amber);font-size:0.6rem;font-weight:700;border:1px solid var(--amber);border-radius:5px;padding:1px 6px;margin-left:4px;}
 .nav__links{display:flex;gap:26px;flex:1;justify-content:center;}
 .nav__links a{color:rgba(255,255,255,0.85);text-decoration:none;font-size:0.92rem;}
 .nav__links a:hover{color:#fff;}

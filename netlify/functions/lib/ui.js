@@ -8,12 +8,18 @@ const BASE_STYLE = `
 :root{--navy:#1b2a41;--navy-deep:#0d1622;--cyan:#e8590c;--amber:#c9a227;--cream:#c2ccd6;--ink:#182430;--muted:#5a6774;--border:#a9b7c2;--font:"Oswald","Segoe UI",system-ui,-apple-system,sans-serif;}
 *{margin:0;padding:0;box-sizing:border-box;}
 body{font-family:var(--font);background:var(--cream);color:var(--ink);min-height:100vh;}
+body.radar-bg{
+  background-color:var(--cream);
+  background-image:url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPSc0MDAnIGhlaWdodD0nNDAwJz4KPHJlY3Qgd2lkdGg9JzQwMCcgaGVpZ2h0PSc0MDAnIGZpbGw9J25vbmUnLz4KPGNpcmNsZSBjeD0nMjAwJyBjeT0nMjAwJyByPSc1MCcgZmlsbD0nbm9uZScgc3Ryb2tlPSdyZ2JhKDI3LDQyLDY1LDAuMDcpJyBzdHJva2Utd2lkdGg9JzEnLz4KPGNpcmNsZSBjeD0nMjAwJyBjeT0nMjAwJyByPScxMDAnIGZpbGw9J25vbmUnIHN0cm9rZT0ncmdiYSgyNyw0Miw2NSwwLjA2KScgc3Ryb2tlLXdpZHRoPScxJy8+CjxjaXJjbGUgY3g9JzIwMCcgY3k9JzIwMCcgcj0nMTUwJyBmaWxsPSdub25lJyBzdHJva2U9J3JnYmEoMjcsNDIsNjUsMC4wNSknIHN0cm9rZS13aWR0aD0nMScvPgo8Y2lyY2xlIGN4PScyMDAnIGN5PScyMDAnIHI9JzE5NScgZmlsbD0nbm9uZScgc3Ryb2tlPSdyZ2JhKDI3LDQyLDY1LDAuMDQpJyBzdHJva2Utd2lkdGg9JzEnLz4KPGxpbmUgeDE9JzAnIHkxPScyMDAnIHgyPSc0MDAnIHkyPScyMDAnIHN0cm9rZT0ncmdiYSgyNyw0Miw2NSwwLjA1KScgc3Ryb2tlLXdpZHRoPScxJy8+CjxsaW5lIHgxPScyMDAnIHkxPScwJyB4Mj0nMjAwJyB5Mj0nNDAwJyBzdHJva2U9J3JnYmEoMjcsNDIsNjUsMC4wNSknIHN0cm9rZS13aWR0aD0nMScvPgo8cGF0aCBkPSdNMCA2MCBRMTAwIDIwIDIwMCA1NSBUNDAwIDUwJyBmaWxsPSdub25lJyBzdHJva2U9J3JnYmEoMjcsNDIsNjUsMC4wNSknIHN0cm9rZS13aWR0aD0nMScvPgo8cGF0aCBkPSdNMCAzNDAgUTEwMCAzODAgMjAwIDM1MCBUNDAwIDM1NScgZmlsbD0nbm9uZScgc3Ryb2tlPSdyZ2JhKDI3LDQyLDY1LDAuMDUpJyBzdHJva2Utd2lkdGg9JzEnLz4KPC9zdmc+");
+  background-repeat:repeat;background-size:400px 400px;background-attachment:fixed;
+}
 a{color:inherit;}
 .topbar{position:sticky;top:0;z-index:10;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:12px 5vw;background:rgba(20,21,12,0.97);backdrop-filter:blur(8px);gap:10px 12px;}
 .topbar__left{display:flex;align-items:center;gap:10px;min-width:0;}
 .topbar__brand{display:flex;align-items:center;gap:8px;text-decoration:none;color:#fff;font-weight:800;flex-shrink:0;}
 .topbar__brand span.mark{color:var(--cyan);font-size:1.2rem;}
 .topbar__brand span.n360{color:var(--cyan);}
+.topbar__brand span.version{color:var(--amber);font-size:0.62rem;font-weight:700;border:1px solid var(--amber);border-radius:5px;padding:1px 6px;margin-left:2px;}
 .topbar__proyecto{color:rgba(255,255,255,0.55);font-size:0.78rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-left:10px;border-left:1px solid rgba(255,255,255,0.15);}
 .topbar__actions{display:flex;flex-wrap:wrap;gap:8px 10px;align-items:center;}
 .btn{
@@ -176,7 +182,7 @@ textarea{resize:vertical;}
 }
 `;
 
-function shell(title, body) {
+function shell(title, body, bodyClass) {
   return `<!DOCTYPE html>
 <html lang="es">
 <head>
@@ -189,7 +195,7 @@ function shell(title, body) {
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>${BASE_STYLE}</style>
 </head>
-<body>
+<body${bodyClass ? ` class="${esc(bodyClass)}"` : ""}>
 ${body}
 </body>
 </html>`;
@@ -205,7 +211,7 @@ function topbar(proyectoId, proyectoNombre) {
     : "";
   return `<header class="topbar">
     <div class="topbar__left">
-      <a href="/app" class="topbar__brand"><span class="mark">◎</span>RadarObra<span class="n360">360</span></a>
+      <a href="/app" class="topbar__brand"><span class="mark">◎</span>RadarObra<span class="n360">360</span><span class="version">V2.0</span></a>
       ${proyectoNombre ? `<span class="topbar__proyecto">${esc(proyectoNombre)}</span>` : ""}
     </div>
     <div class="topbar__actions">

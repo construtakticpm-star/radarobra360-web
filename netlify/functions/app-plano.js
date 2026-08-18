@@ -141,7 +141,10 @@ exports.handler = async (event) => {
   // NO aparece en el radar hasta que alguien lo ubique manualmente.
   const unplacedListHtml = `
     <p class="eyebrow" style="margin-top:24px;">Sin ubicar todavía</p>
-    <p class="hint" style="margin-bottom:10px;">Sube fotos o video sin marcar un lugar en el plano todavía. Queda aquí como próximo evento hasta que lo ubiques.</p>
+    <div class="unplaced-list" id="unplacedList">
+      ${unplacedItemsHtml}
+    </div>
+    <p class="hint" style="margin:10px 0;">Sube fotos o video sin marcar un lugar en el plano todavía. Queda aquí como próximo evento hasta que lo ubiques.</p>
     <div class="card" style="margin-bottom:14px;">
       <form id="quickUploadForm">
         <label for="quickNombre">Nombre (opcional)</label>
@@ -156,9 +159,6 @@ exports.handler = async (event) => {
         <button type="submit" class="btn btn--primary btn--small" id="quickUploadBtn" style="margin-top:12px;">Subir sin ubicar</button>
         <div class="status" id="quickUploadStatus"></div>
       </form>
-    </div>
-    <div class="unplaced-list" id="unplacedList">
-      ${unplacedItemsHtml}
     </div>`;
 
   // Full punto data (incl. registros/fotos/video ids) embedded so clicking a

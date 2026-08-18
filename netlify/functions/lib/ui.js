@@ -92,6 +92,13 @@ textarea{resize:vertical;}
 .plano-detail__head h2{font-size:1.15rem;color:var(--navy);}
 .plano-detail .registro{padding:14px;margin-bottom:12px;}
 .plano-detail .registro__media{grid-template-columns:repeat(auto-fill,minmax(100px,1fr));}
+.week-bars{display:flex;gap:8px;overflow-x:auto;padding-bottom:8px;margin-bottom:16px;}
+.week-bar{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:3px;background:var(--navy-deep);color:rgba(255,255,255,0.75);border:none;border-radius:10px;padding:10px 14px;cursor:pointer;font-family:inherit;min-width:60px;transition:transform .1s ease;}
+.week-bar:hover{transform:translateY(-2px);}
+.week-bar__label{font-size:0.78rem;font-weight:800;}
+.week-bar__count{font-size:0.66rem;color:rgba(255,255,255,0.55);white-space:nowrap;}
+.week-bar--active{background:linear-gradient(160deg,var(--cyan),#0284c7);color:#04141f;}
+.week-bar--active .week-bar__count{color:rgba(4,20,31,0.7);}
 @media (max-width:860px){
   .plano-layout{grid-template-columns:1fr;}
   .plano-detail{position:static;max-height:none;}

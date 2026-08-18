@@ -178,6 +178,47 @@ exports.handler = async (event) => {
           : '<img src="/app/media?id=' + id + '" alt="Foto">';
       }
 
+      // ISO week (lunes-domingo, semana 1 = la que contiene el primer jueves del año).
+      function isoWeekInfo(fechaStr) {
+        const d = new Date(fechaStr + 'T00:00:00');
+        const target = new Date(d.valueOf());
+        const dayNr = (d.getDay() + 6) % 7;
+        target.setDate(target.getDate() - dayNr + 3);
+        const firstThursday = new Date(target.getFullYear(), 0, 4);
+        const diff = (target - firstThursday) / 86400000;
+        const week = 1 + Math.round(diff / 7);
+        return { year: target.getFullYear(), week };
+      }
+
+      function groupByWeek(registros) {
+        const map = new Map();
+        registros.forEach(r => {
+          const info = isoWeekInfo(r.fecha);
+          const key = info.year + '-' + info.week;
+          if (!map.has(key)) map.set(key, { key, year: info.year, week: info.week, registros: [] });
+          map.get(key).registros.push(r);
+        });
+        return Array.from(map.values()).sort((a, b) => (a.year - b.year) || (a.week - b.week));
+      }
+
+      function fotosCount(registros) {
+        return registros.reduce((sum, r) => sum + (r.fotos ? r.fotos.length : 0) + (r.video ? 1 : 0), 0);
+      }
+
+      function renderRegistros(registros) {
+        return registros.map(r => {
+          const fotos = (r.fotos || []).map(id => mediaTag(id, false)).join('');
+          const video = r.video ? mediaTag(r.video, true) : '';
+          return '<div class="registro">'
+            + '<div class="registro__head"><span class="registro__fecha">' + r.fecha + '</span></div>'
+            + (r.nota ? '<p class="registro__nota">' + r.nota + '</p>' : '')
+            + '<div class="registro__media">' + fotos + video + '</div>'
+            + '</div>';
+        }).join('');
+      }
+
+      let selectedWeekKey = null;
+
       function renderDetail(puntoId) {
         const punto = PUNTOS_DATA.find(p => p.id === puntoId);
         if (!punto) return;
@@ -194,15 +235,29 @@ exports.handler = async (event) => {
           return;
         }
 
-        detailRegistros.innerHTML = punto.registros.map(r => {
-          const fotos = (r.fotos || []).map(id => mediaTag(id, false)).join('');
-          const video = r.video ? mediaTag(r.video, true) : '';
-          return '<div class="registro">'
-            + '<div class="registro__head"><span class="registro__fecha">' + r.fecha + '</span></div>'
-            + (r.nota ? '<p class="registro__nota">' + r.nota + '</p>' : '')
-            + '<div class="registro__media">' + fotos + video + '</div>'
-            + '</div>';
-        }).join('');
+        const weeks = groupByWeek(punto.registros);
+        selectedWeekKey = weeks[weeks.length - 1].key;
+
+        function paintWeek() {
+          const current = weeks.find(w => w.key === selectedWeekKey);
+          const barsHtml = '<div class="week-bars">' + weeks.map(w => {
+            const active = w.key === selectedWeekKey ? ' week-bar--active' : '';
+            return '<button type="button" class="week-bar' + active + '" data-week-key="' + w.key + '">'
+              + '<span class="week-bar__label">Sem ' + w.week + '</span>'
+              + '<span class="week-bar__count">' + fotosCount(w.registros) + ' 📷</span>'
+              + '</button>';
+          }).join('') + '</div>';
+
+          detailRegistros.innerHTML = barsHtml + '<div id="weekRegistros">' + renderRegistros(current.registros) + '</div>';
+
+          detailRegistros.querySelectorAll('.week-bar').forEach(btn => {
+            btn.addEventListener('click', () => {
+              selectedWeekKey = btn.dataset.weekKey;
+              paintWeek();
+            });
+          });
+        }
+        paintWeek();
       }
 
       document.querySelectorAll('.pin, [data-punto-id].linklike').forEach(el => {

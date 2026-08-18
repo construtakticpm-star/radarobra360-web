@@ -111,8 +111,11 @@ exports.handler = async (event) => {
 
       <div class="plano-toolbar">
         <button class="btn btn--primary" id="placeBtn">📍 Colocar punto</button>
+        <button type="button" class="btn btn--ghost" id="replaceBtn" style="color:var(--navy); border-color:var(--border);">🔄 Reemplazar plano</button>
         <span class="hint" id="placeHint"></span>
       </div>
+      <input type="file" id="replaceInput" accept="image/*" style="display:none;">
+      <div class="status" id="replaceStatus"></div>
 
       <div class="plano-layout">
         <div class="plano-stage-col">
@@ -159,6 +162,9 @@ exports.handler = async (event) => {
       const planoImg = document.getElementById('planoImg');
       const placeBtn = document.getElementById('placeBtn');
       const placeHint = document.getElementById('placeHint');
+      const replaceBtn = document.getElementById('replaceBtn');
+      const replaceInput = document.getElementById('replaceInput');
+      const replaceStatus = document.getElementById('replaceStatus');
       const picker = document.getElementById('picker');
       const existente = document.getElementById('existente');
       const nuevoNombre = document.getElementById('nuevoNombre');
@@ -177,6 +183,50 @@ exports.handler = async (event) => {
           ? '<video controls preload="metadata" src="/app/media?id=' + id + '"></video>'
           : '<img src="/app/media?id=' + id + '" alt="Foto">';
       }
+
+      function fileToBase64(file) {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result.split(',')[1]);
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+      }
+
+      replaceBtn.addEventListener('click', () => {
+        const ok = confirm('¿Reemplazar el plano actual por uno nuevo? Los puntos ya colocados se conservan, pero podrían no coincidir con la nueva imagen.');
+        if (ok) replaceInput.click();
+      });
+
+      replaceInput.addEventListener('change', async () => {
+        const file = replaceInput.files[0];
+        if (!file) return;
+        if (file.size > 4 * 1024 * 1024) {
+          replaceStatus.className = 'status status--error';
+          replaceStatus.textContent = 'La imagen pesa más de 4 MB — usa una más ligera.';
+          replaceInput.value = '';
+          return;
+        }
+        replaceBtn.disabled = true;
+        replaceStatus.className = 'status';
+        replaceStatus.textContent = 'Subiendo plano nuevo...';
+        try {
+          const base64 = await fileToBase64(file);
+          const res = await fetch('/app/plano-upload', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ base64, contentType: file.type })
+          });
+          const body = await res.json().catch(() => ({}));
+          if (!res.ok) throw new Error((body.error || 'Error del servidor') + (body.debug ? ' — ' + body.debug : ''));
+          window.location.reload();
+        } catch (err) {
+          replaceStatus.className = 'status status--error';
+          replaceStatus.textContent = err.message || 'No se pudo reemplazar el plano.';
+          replaceBtn.disabled = false;
+          replaceInput.value = '';
+        }
+      });
 
       // ISO week (lunes-domingo, semana 1 = la que contiene el primer jueves del año).
       function isoWeekInfo(fechaStr) {

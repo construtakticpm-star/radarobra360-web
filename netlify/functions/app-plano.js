@@ -245,17 +245,19 @@ exports.handler = async (event) => {
         <div class="plano-detail" id="detailPanel">
           <div class="plano-detail__empty" id="detailEmpty">👈 Selecciona un punto en el plano para ver sus fotos y video aquí.</div>
           <div class="plano-detail__content" id="detailContent" style="display:none;">
-            <div class="plano-detail__head">
+            <div class="plano-detail__titlebar">
               <h2 id="detailName"></h2>
+            </div>
+            <div class="plano-detail__body">
               <div class="plano-detail__actions">
                 <button type="button" class="btn btn--ghost btn--small" id="exportBtn" style="color:var(--navy); border-color:var(--border);">🖨️ Exportar</button>
                 <button type="button" class="btn btn--ghost btn--small" id="shareBtn" style="color:var(--navy); border-color:var(--border);">📤 Compartir</button>
                 <a id="detailAddLink" class="btn btn--primary btn--small" href="#">＋ Agregar aquí</a>
               </div>
-            </div>
-            <p class="plano-detail__responsable" id="detailResponsable"></p>
+              <p class="plano-detail__responsable" id="detailResponsable"></p>
 
-            <div id="detailRegistros"></div>
+              <div id="detailRegistros"></div>
+            </div>
           </div>
         </div>
       </div>

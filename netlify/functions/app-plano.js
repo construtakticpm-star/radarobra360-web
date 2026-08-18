@@ -134,12 +134,10 @@ exports.handler = async (event) => {
     </button>`;
   }).join("");
 
-  const unplacedOptionsHtml = unplaced.map(p => `<option value="${esc(p.id)}">${esc(p.nombre)}</option>`).join("");
-
   const unplacedListHtml = unplaced.length ? `
     <p class="eyebrow" style="margin-top:24px;">Sin ubicar todavía</p>
     <div class="unplaced-list">
-      ${unplaced.map(p => `<div class="unplaced-item">${esc(p.nombre)} — <button type="button" class="linklike" data-punto-id="${esc(p.id)}">ver fotos</button></div>`).join("")}
+      ${unplaced.map(p => `<div class="unplaced-item">${esc(p.nombre)} — <button type="button" class="linklike" data-punto-id="${esc(p.id)}">ver fotos</button> · <button type="button" class="linklike" data-place-existing-id="${esc(p.id)}" data-place-existing-nombre="${esc(p.nombre)}">📍 ubicar en el mapa</button></div>`).join("")}
     </div>` : "";
 
   // Full punto data (incl. registros/fotos/video ids) embedded so clicking a
@@ -169,6 +167,7 @@ exports.handler = async (event) => {
           <button type="button" class="btn btn--ghost" id="moveBtn">↔️ Mover punto</button>
           <button type="button" class="btn btn--ghost" id="deleteBtn" style="color:#ff8a75;">🗑️ Eliminar punto</button>
           <button type="button" class="btn btn--ghost" id="replaceBtn">🔄 Reemplazar plano</button>
+          <button type="button" class="btn btn--ghost audio-toggle">🔊 Sonido: ON</button>
           <span class="hint" id="placeHint"></span>
         </div>
         <input type="file" id="replaceInput" accept="image/*" style="display:none;">
@@ -203,22 +202,6 @@ exports.handler = async (event) => {
       </div>
     </div>
 
-    <div class="pin-picker" id="picker" style="display:none;">
-      <div class="pin-picker__card">
-        <h3>¿Qué punto va aquí?</h3>
-        <label for="existente">Punto existente sin ubicar</label>
-        <select id="existente">
-          <option value="">— Elegir —</option>
-          ${unplacedOptionsHtml}
-        </select>
-        <label for="nuevoNombre">O crear uno nuevo</label>
-        <input type="text" id="nuevoNombre" placeholder="Ej. Fachada Poniente">
-        <button class="btn btn--primary btn--block" id="confirmPin" style="margin-top:18px;">Colocar aquí</button>
-        <button class="btn btn--ghost btn--block" id="cancelPin" style="margin-top:8px; color:var(--navy); border-color:var(--border);">Cancelar</button>
-        <div class="status" id="pickerStatus"></div>
-      </div>
-    </div>
-
     ${lightboxMarkup()}
 
     <script>
@@ -238,12 +221,6 @@ exports.handler = async (event) => {
       const replaceBtn = document.getElementById('replaceBtn');
       const replaceInput = document.getElementById('replaceInput');
       const replaceStatus = document.getElementById('replaceStatus');
-      const picker = document.getElementById('picker');
-      const existente = document.getElementById('existente');
-      const nuevoNombre = document.getElementById('nuevoNombre');
-      const confirmPin = document.getElementById('confirmPin');
-      const cancelPin = document.getElementById('cancelPin');
-      const pickerStatus = document.getElementById('pickerStatus');
 
       const detailEmpty = document.getElementById('detailEmpty');
       const detailContent = document.getElementById('detailContent');
@@ -552,10 +529,11 @@ exports.handler = async (event) => {
       });
 
       let placing = false;
-      let pendingCoords = null;
       let moving = false;
       let movingPuntoId = null;
       let removing = false;
+      let placingExistingId = null;
+      let placingExistingNombre = null;
 
       function exitMoveMode() {
         moving = false;
@@ -566,6 +544,8 @@ exports.handler = async (event) => {
 
       function exitPlaceMode() {
         placing = false;
+        placingExistingId = null;
+        placingExistingNombre = null;
         stage.classList.remove('placing');
       }
 
@@ -574,12 +554,63 @@ exports.handler = async (event) => {
         stage.classList.remove('removing');
       }
 
+      function generarNombreAuto() {
+        let n = PUNTOS_DATA.length + 1;
+        let nombre = 'Punto ' + n;
+        while (PUNTOS_DATA.some(p => p.nombre === nombre)) {
+          n++;
+          nombre = 'Punto ' + n;
+        }
+        return nombre;
+      }
+
+      // Coloca (o reubica) un punto al instante en el DOM, sin depender de
+      // una recarga — se usa tanto para puntos nuevos como para volver a
+      // ubicar uno que estaba "sin ubicar".
+      function placePinInstant(id, nombre, x, y) {
+        let punto = PUNTOS_DATA.find(p => p.id === id);
+        if (!punto) {
+          punto = { id: id, nombre: nombre, registros: [], estatusActual: 'pendiente', responsableActualId: null };
+          PUNTOS_DATA.push(punto);
+        }
+
+        const existingPinEl = document.querySelector('.pin[data-punto-id="' + id + '"]');
+        if (existingPinEl) {
+          existingPinEl.style.left = x + '%';
+          existingPinEl.style.top = y + '%';
+        } else {
+          const pinHtml = '<button type="button" class="pin pin--estatus-pendiente" data-punto-id="' + escHtml(id) + '" style="left:' + x + '%; top:' + y + '%;" title="' + escHtml(nombre) + '">'
+            + '<span class="pin__dot"></span>'
+            + '<span class="pin__label">' + escHtml(nombre) + '</span>'
+            + '<span class="pin__responsable">Sin asignar</span>'
+            + '</button>';
+          stage.insertAdjacentHTML('beforeend', pinHtml);
+          attachPinHandler(stage.querySelector('.pin[data-punto-id="' + id + '"]'));
+        }
+
+        const unplacedBtn = document.querySelector('.unplaced-item [data-punto-id="' + id + '"], .unplaced-item [data-place-existing-id="' + id + '"]');
+        const unplacedItem = unplacedBtn ? unplacedBtn.closest('.unplaced-item') : null;
+        if (unplacedItem) unplacedItem.remove();
+      }
+
       placeBtn.addEventListener('click', () => {
         exitMoveMode();
         exitRemoveMode();
         placing = !placing;
         stage.classList.toggle('placing', placing);
         placeHint.textContent = placing ? 'Ahora haz click sobre el plano.' : '';
+      });
+
+      document.querySelectorAll('[data-place-existing-id]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          exitMoveMode();
+          exitRemoveMode();
+          placing = false;
+          placingExistingId = btn.dataset.placeExistingId;
+          placingExistingNombre = btn.dataset.placeExistingNombre;
+          stage.classList.add('placing');
+          placeHint.textContent = 'Ahora haz click sobre el plano para ubicar "' + placingExistingNombre + '".';
+        });
       });
 
       moveBtn.addEventListener('click', () => {
@@ -671,84 +702,34 @@ exports.handler = async (event) => {
           return;
         }
 
-        if (!placing) return;
+        if (!placing && !placingExistingId) return;
+
         const rect = planoImg.getBoundingClientRect();
-        const x = ((e.clientX - rect.left) / rect.width) * 100;
-        const y = ((e.clientY - rect.top) / rect.height) * 100;
-        pendingCoords = { x: Math.max(0, Math.min(100, x)), y: Math.max(0, Math.min(100, y)) };
-        picker.style.display = 'flex';
+        const x = Math.max(0, Math.min(100, ((e.clientX - rect.left) / rect.width) * 100));
+        const y = Math.max(0, Math.min(100, ((e.clientY - rect.top) / rect.height) * 100));
+
+        const payload = placingExistingId
+          ? { proyectoId: PROYECTO_ID, puntoId: placingExistingId, x, y }
+          : { proyectoId: PROYECTO_ID, nombre: generarNombreAuto(), x, y };
+
         exitPlaceMode();
-        placeHint.textContent = '';
-      });
+        placeHint.textContent = 'Guardando...';
 
-      cancelPin.addEventListener('click', () => {
-        picker.style.display = 'none';
-        pendingCoords = null;
-        existente.value = '';
-        nuevoNombre.value = '';
-        pickerStatus.textContent = '';
-      });
-
-      confirmPin.addEventListener('click', async () => {
-        if (!pendingCoords) return;
-        const puntoId = existente.value;
-        const nombre = nuevoNombre.value.trim();
-        if (!puntoId && !nombre) {
-          pickerStatus.className = 'status status--error';
-          pickerStatus.textContent = 'Elige un punto existente o escribe uno nuevo.';
-          return;
-        }
-        confirmPin.disabled = true;
-        pickerStatus.className = 'status';
-        pickerStatus.textContent = 'Guardando...';
         try {
           const res = await fetch('/app/plano-pin', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ proyectoId: PROYECTO_ID, puntoId: puntoId || null, nombre: nombre || null, x: pendingCoords.x, y: pendingCoords.y })
+            body: JSON.stringify(payload)
           });
           const body = await res.json().catch(() => ({}));
           if (!res.ok) throw new Error((body.error || 'Error del servidor') + (body.debug ? ' — ' + body.debug : ''));
-
           // Refleja el pin al instante en el plano, sin esperar una recarga
           // (evita depender de que el guardado ya haya propagado). Abrir su
           // registro sigue siendo un paso aparte: hay que darle click al pin.
-          let punto = PUNTOS_DATA.find(p => p.id === body.id);
-          if (!punto) {
-            punto = { id: body.id, nombre: body.nombre, registros: [], estatusActual: 'pendiente', responsableActualId: null };
-            PUNTOS_DATA.push(punto);
-          }
-
-          const existingPinEl = document.querySelector('.pin[data-punto-id="' + body.id + '"]');
-          if (existingPinEl) {
-            existingPinEl.style.left = pendingCoords.x + '%';
-            existingPinEl.style.top = pendingCoords.y + '%';
-          } else {
-            const pinHtml = '<button type="button" class="pin pin--estatus-pendiente" data-punto-id="' + escHtml(body.id) + '" style="left:' + pendingCoords.x + '%; top:' + pendingCoords.y + '%;" title="' + escHtml(body.nombre) + '">'
-              + '<span class="pin__dot"></span>'
-              + '<span class="pin__label">' + escHtml(body.nombre) + '</span>'
-              + '<span class="pin__responsable">Sin asignar</span>'
-              + '</button>';
-            stage.insertAdjacentHTML('beforeend', pinHtml);
-            attachPinHandler(stage.querySelector('.pin[data-punto-id="' + body.id + '"]'));
-          }
-
-          const unplacedOption = existente.querySelector('option[value="' + body.id + '"]');
-          if (unplacedOption) unplacedOption.remove();
-          const unplacedBtn = document.querySelector('.unplaced-item [data-punto-id="' + body.id + '"]');
-          const unplacedItem = unplacedBtn ? unplacedBtn.closest('.unplaced-item') : null;
-          if (unplacedItem) unplacedItem.remove();
-
-          picker.style.display = 'none';
-          pendingCoords = null;
-          existente.value = '';
-          nuevoNombre.value = '';
-          pickerStatus.textContent = '';
-          confirmPin.disabled = false;
+          placePinInstant(body.id, body.nombre, x, y);
+          placeHint.textContent = '';
         } catch (err) {
-          pickerStatus.className = 'status status--error';
-          pickerStatus.textContent = err.message || 'No se pudo guardar.';
-          confirmPin.disabled = false;
+          placeHint.textContent = err.message || 'No se pudo guardar.';
         }
       });
 

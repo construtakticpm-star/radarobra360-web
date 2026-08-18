@@ -159,12 +159,6 @@ textarea{resize:vertical;}
 .pin--moving .pin__dot{background:#fff;box-shadow:0 0 0 4px rgba(232,89,12,0.55),0 2px 6px rgba(0,0,0,0.4);animation:pin-pulse 1s ease-in-out infinite;}
 .pin--moving .pin__label{background:var(--cyan);color:#04141f;}
 @keyframes pin-pulse{0%,100%{transform:rotate(45deg) scale(1);}50%{transform:rotate(45deg) scale(1.3);}}
-.pin-picker{
-  position:fixed;inset:0;background:rgba(13,22,34,0.6);display:flex;align-items:center;justify-content:center;
-  z-index:50;padding:20px;
-}
-.pin-picker__card{background:#fff;border:2px solid var(--border);border-radius:14px;padding:22px;max-width:360px;width:100%;box-shadow:0 6px 0 rgba(0,0,0,0.1);}
-.pin-picker__card h3{color:var(--navy);margin-bottom:14px;font-size:1.05rem;}
 .unplaced-list{display:flex;flex-direction:column;gap:8px;margin-top:24px;}
 .unplaced-item{background:#fff;border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:0.88rem;color:var(--navy);}
 
@@ -200,7 +194,7 @@ textarea{resize:vertical;}
 
 @media print{
   body{background:#fff;}
-  .topbar,.plano-toolbar,.page-actions,.pin-picker,.lightbox,.plano-stage-col,#replaceInput,.plano-detail__actions,.week-bars,.media-item__delete,.media-item__share,.registro__notify,.registro__edit,.registro__edit-toggle{display:none !important;}
+  .topbar,.plano-toolbar,.page-actions,.lightbox,.plano-stage-col,#replaceInput,.plano-detail__actions,.week-bars,.media-item__delete,.media-item__share,.registro__notify,.registro__edit,.registro__edit-toggle{display:none !important;}
   .wrap,.wrap--wide{max-width:none;padding:0;margin:0;}
   .plano-layout{display:block;}
   .plano-detail{position:static;max-height:none;overflow:visible;border:none;padding:0;box-shadow:none;}
@@ -224,6 +218,7 @@ function shell(title, body, bodyClass) {
 </head>
 <body${bodyClass ? ` class="${esc(bodyClass)}"` : ""}>
 ${body}
+<script>${soundScript()}</script>
 </body>
 </html>`;
 }
@@ -262,6 +257,66 @@ function lightboxMarkup() {
       <button type="button" class="lightbox__nav lightbox__nav--next" id="lightboxNext" aria-label="Siguiente">›</button>
       <div class="lightbox__count" id="lightboxCount"></div>
     </div>`;
+}
+
+// Button-click blip (synthesized, no audio file needed) + a global mute
+// toggle persisted in localStorage. Loaded on every page via shell() so the
+// sound and the mute state are consistent everywhere; the actual toggle
+// button (class="audio-toggle") only needs to exist on one page — this
+// script wires up as many as it finds.
+function soundScript() {
+  return `
+    (function () {
+      var MUTE_KEY = 'radarobra360_muted';
+
+      function isMuted() {
+        return localStorage.getItem(MUTE_KEY) === 'true';
+      }
+
+      window.playClickSound = function () {
+        if (isMuted()) return;
+        try {
+          var Ctx = window.AudioContext || window.webkitAudioContext;
+          if (!Ctx) return;
+          var ctx = window.__radarAudioCtx || (window.__radarAudioCtx = new Ctx());
+          var osc = ctx.createOscillator();
+          var gain = ctx.createGain();
+          osc.type = 'square';
+          osc.frequency.setValueAtTime(720, ctx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(420, ctx.currentTime + 0.08);
+          gain.gain.setValueAtTime(0.07, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.09);
+          osc.connect(gain).connect(ctx.destination);
+          osc.start();
+          osc.stop(ctx.currentTime + 0.1);
+        } catch (e) {}
+      };
+
+      function updateToggleUI() {
+        var muted = isMuted();
+        document.querySelectorAll('.audio-toggle').forEach(function (btn) {
+          btn.textContent = muted ? '🔇 Sonido: OFF' : '🔊 Sonido: ON';
+        });
+      }
+
+      window.toggleAudioMute = function () {
+        localStorage.setItem(MUTE_KEY, isMuted() ? 'false' : 'true');
+        updateToggleUI();
+      };
+
+      document.querySelectorAll('.audio-toggle').forEach(function (btn) {
+        btn.addEventListener('click', function (e) {
+          e.stopPropagation();
+          window.toggleAudioMute();
+        });
+      });
+      updateToggleUI();
+
+      document.addEventListener('click', function (e) {
+        if (e.target.closest('.btn')) window.playClickSound();
+      });
+    })();
+  `;
 }
 
 function lightboxScript() {
@@ -323,4 +378,4 @@ function lightboxScript() {
   `;
 }
 
-module.exports = { esc, shell, topbar, lightboxMarkup, lightboxScript };
+module.exports = { esc, shell, topbar, lightboxMarkup, lightboxScript, soundScript };

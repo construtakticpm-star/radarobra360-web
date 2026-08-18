@@ -76,9 +76,10 @@ exports.handler = async (event) => {
     };
   }
 
+  const puntoId = slugify(punto);
   return {
     statusCode: 200,
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ ok: true })
+    body: JSON.stringify({ ok: true, puntoId, nombre: punto })
   };
 };

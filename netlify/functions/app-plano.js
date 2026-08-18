@@ -134,11 +134,32 @@ exports.handler = async (event) => {
     </button>`;
   }).join("");
 
-  const unplacedListHtml = unplaced.length ? `
+  const unplacedItemsHtml = unplaced.map(p => `<div class="unplaced-item">${esc(p.nombre)} — <button type="button" class="linklike" data-punto-id="${esc(p.id)}">ver fotos</button> · <button type="button" class="linklike" data-place-existing-id="${esc(p.id)}" data-place-existing-nombre="${esc(p.nombre)}">📍 ubicar en el mapa</button></div>`).join("");
+
+  // Sección "sin ubicar todavía": siempre visible, funciona como bandeja de
+  // futuros eventos — subir fotos/video aquí crea (o alimenta) un punto que
+  // NO aparece en el radar hasta que alguien lo ubique manualmente.
+  const unplacedListHtml = `
     <p class="eyebrow" style="margin-top:24px;">Sin ubicar todavía</p>
-    <div class="unplaced-list">
-      ${unplaced.map(p => `<div class="unplaced-item">${esc(p.nombre)} — <button type="button" class="linklike" data-punto-id="${esc(p.id)}">ver fotos</button> · <button type="button" class="linklike" data-place-existing-id="${esc(p.id)}" data-place-existing-nombre="${esc(p.nombre)}">📍 ubicar en el mapa</button></div>`).join("")}
-    </div>` : "";
+    <p class="hint" style="margin-bottom:10px;">Sube fotos o video sin marcar un lugar en el plano todavía. Queda aquí como próximo evento hasta que lo ubiques.</p>
+    <div class="card" style="margin-bottom:14px;">
+      <form id="quickUploadForm">
+        <label for="quickNombre">Nombre (opcional)</label>
+        <input type="text" id="quickNombre" placeholder="Ej. Bodega, Entrega de material...">
+
+        <label for="quickFotos">Fotos</label>
+        <input type="file" id="quickFotos" accept="image/*" multiple>
+
+        <label for="quickVideo">Video (opcional)</label>
+        <input type="file" id="quickVideo" accept="video/*">
+
+        <button type="submit" class="btn btn--primary btn--small" id="quickUploadBtn" style="margin-top:12px;">Subir sin ubicar</button>
+        <div class="status" id="quickUploadStatus"></div>
+      </form>
+    </div>
+    <div class="unplaced-list" id="unplacedList">
+      ${unplacedItemsHtml}
+    </div>`;
 
   // Full punto data (incl. registros/fotos/video ids) embedded so clicking a
   // pin renders instantly, no extra round trip to fetch each punto.
@@ -231,6 +252,14 @@ exports.handler = async (event) => {
       const exportBtn = document.getElementById('exportBtn');
       const shareBtn = document.getElementById('shareBtn');
       let currentPuntoId = null;
+
+      const unplacedList = document.getElementById('unplacedList');
+      const quickUploadForm = document.getElementById('quickUploadForm');
+      const quickNombreInput = document.getElementById('quickNombre');
+      const quickFotosInput = document.getElementById('quickFotos');
+      const quickVideoInput = document.getElementById('quickVideo');
+      const quickUploadBtn = document.getElementById('quickUploadBtn');
+      const quickUploadStatus = document.getElementById('quickUploadStatus');
 
       exportBtn.addEventListener('click', () => window.print());
       shareBtn.addEventListener('click', () => {
@@ -521,12 +550,13 @@ exports.handler = async (event) => {
         paintWeek();
       }
 
-      document.querySelectorAll('[data-punto-id].linklike').forEach(el => {
+      function attachLinklikeHandler(el) {
         el.addEventListener('click', (e) => {
           e.stopPropagation();
           renderDetail(el.dataset.puntoId);
         });
-      });
+      }
+      document.querySelectorAll('[data-punto-id].linklike').forEach(attachLinklikeHandler);
 
       let placing = false;
       let moving = false;
@@ -601,7 +631,7 @@ exports.handler = async (event) => {
         placeHint.textContent = placing ? 'Ahora haz click sobre el plano.' : '';
       });
 
-      document.querySelectorAll('[data-place-existing-id]').forEach(btn => {
+      function attachPlaceExistingHandler(btn) {
         btn.addEventListener('click', () => {
           exitMoveMode();
           exitRemoveMode();
@@ -611,6 +641,72 @@ exports.handler = async (event) => {
           stage.classList.add('placing');
           placeHint.textContent = 'Ahora haz click sobre el plano para ubicar "' + placingExistingNombre + '".';
         });
+      }
+      document.querySelectorAll('[data-place-existing-id]').forEach(attachPlaceExistingHandler);
+
+      // Agrega al instante un nuevo item "sin ubicar" (bandeja de futuros
+      // eventos) sin recargar la página, mismo patrón que placePinInstant.
+      function addUnplacedItem(id, nombre) {
+        if (!PUNTOS_DATA.find(p => p.id === id)) {
+          PUNTOS_DATA.push({ id: id, nombre: nombre, registros: [], estatusActual: 'pendiente', responsableActualId: null });
+        }
+        const div = document.createElement('div');
+        div.className = 'unplaced-item';
+        div.innerHTML = escHtml(nombre) + ' — <button type="button" class="linklike" data-punto-id="' + escHtml(id) + '">ver fotos</button> · <button type="button" class="linklike" data-place-existing-id="' + escHtml(id) + '" data-place-existing-nombre="' + escHtml(nombre) + '">📍 ubicar en el mapa</button>';
+        unplacedList.appendChild(div);
+        attachLinklikeHandler(div.querySelector('[data-punto-id]'));
+        attachPlaceExistingHandler(div.querySelector('[data-place-existing-id]'));
+      }
+
+      quickUploadForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const fotos = Array.from(quickFotosInput.files);
+        const video = quickVideoInput.files[0] || null;
+        if (!fotos.length && !video) {
+          quickUploadStatus.className = 'status status--error';
+          quickUploadStatus.textContent = 'Selecciona al menos una foto o un video.';
+          return;
+        }
+        quickUploadBtn.disabled = true;
+        quickUploadStatus.className = 'status';
+        quickUploadStatus.textContent = 'Subiendo...';
+
+        const nombre = quickNombreInput.value.trim() || generarNombreAuto();
+        const payload = {
+          proyectoId: PROYECTO_ID,
+          punto: nombre,
+          fecha: new Date().toISOString().slice(0, 10),
+          nota: '',
+          estatus: 'pendiente',
+          responsableId: null,
+          fotos: [],
+          video: null
+        };
+
+        try {
+          for (const file of fotos) {
+            payload.fotos.push({ base64: await fileToBase64(file), contentType: file.type });
+          }
+          if (video) {
+            payload.video = { base64: await fileToBase64(video), contentType: video.type };
+          }
+          const res = await fetch('/app/submit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          const body = await res.json().catch(() => ({}));
+          if (!res.ok) throw new Error((body.error || 'Error del servidor') + (body.debug ? ' — ' + body.debug : ''));
+          addUnplacedItem(body.puntoId, body.nombre);
+          quickUploadForm.reset();
+          quickUploadStatus.className = 'status status--ok';
+          quickUploadStatus.textContent = '¡Guardado! Sigue sin ubicar hasta que lo coloques en el mapa.';
+        } catch (err) {
+          quickUploadStatus.className = 'status status--error';
+          quickUploadStatus.textContent = err.message || 'No se pudo subir.';
+        } finally {
+          quickUploadBtn.disabled = false;
+        }
       });
 
       moveBtn.addEventListener('click', () => {

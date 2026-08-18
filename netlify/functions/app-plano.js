@@ -111,6 +111,7 @@ exports.handler = async (event) => {
 
       <div class="plano-toolbar">
         <button class="btn btn--primary" id="placeBtn">📍 Colocar punto</button>
+        <button type="button" class="btn btn--ghost" id="moveBtn" style="color:var(--navy); border-color:var(--border);">↔️ Mover punto</button>
         <button type="button" class="btn btn--ghost" id="replaceBtn" style="color:var(--navy); border-color:var(--border);">🔄 Reemplazar plano</button>
         <span class="hint" id="placeHint"></span>
       </div>
@@ -162,6 +163,7 @@ exports.handler = async (event) => {
       const planoImg = document.getElementById('planoImg');
       const placeBtn = document.getElementById('placeBtn');
       const placeHint = document.getElementById('placeHint');
+      const moveBtn = document.getElementById('moveBtn');
       const replaceBtn = document.getElementById('replaceBtn');
       const replaceInput = document.getElementById('replaceInput');
       const replaceStatus = document.getElementById('replaceStatus');
@@ -310,7 +312,7 @@ exports.handler = async (event) => {
         paintWeek();
       }
 
-      document.querySelectorAll('.pin, [data-punto-id].linklike').forEach(el => {
+      document.querySelectorAll('[data-punto-id].linklike').forEach(el => {
         el.addEventListener('click', (e) => {
           e.stopPropagation();
           renderDetail(el.dataset.puntoId);
@@ -319,22 +321,91 @@ exports.handler = async (event) => {
 
       let placing = false;
       let pendingCoords = null;
+      let moving = false;
+      let movingPuntoId = null;
+
+      function exitMoveMode() {
+        moving = false;
+        movingPuntoId = null;
+        stage.classList.remove('moving');
+        document.querySelectorAll('.pin').forEach(p => p.classList.remove('pin--moving'));
+      }
+
+      function exitPlaceMode() {
+        placing = false;
+        stage.classList.remove('placing');
+      }
 
       placeBtn.addEventListener('click', () => {
+        exitMoveMode();
         placing = !placing;
         stage.classList.toggle('placing', placing);
         placeHint.textContent = placing ? 'Ahora haz click sobre el plano.' : '';
       });
 
-      stage.addEventListener('click', (e) => {
+      moveBtn.addEventListener('click', () => {
+        exitPlaceMode();
+        moving = !moving;
+        movingPuntoId = null;
+        stage.classList.toggle('moving', moving);
+        document.querySelectorAll('.pin').forEach(p => p.classList.remove('pin--moving'));
+        placeHint.textContent = moving ? 'Modo mover: haz click en el punto que quieres reubicar.' : '';
+      });
+
+      document.querySelectorAll('.pin').forEach(el => {
+        el.addEventListener('click', (e) => {
+          e.stopPropagation();
+          if (moving) {
+            if (movingPuntoId === el.dataset.puntoId) {
+              movingPuntoId = null;
+              el.classList.remove('pin--moving');
+              placeHint.textContent = 'Modo mover: haz click en el punto que quieres reubicar.';
+              return;
+            }
+            movingPuntoId = el.dataset.puntoId;
+            document.querySelectorAll('.pin').forEach(p => p.classList.toggle('pin--moving', p.dataset.puntoId === movingPuntoId));
+            placeHint.textContent = 'Ahora haz click en la nueva posición sobre el plano.';
+            return;
+          }
+          renderDetail(el.dataset.puntoId);
+        });
+      });
+
+      stage.addEventListener('click', async (e) => {
+        if (moving && movingPuntoId) {
+          const rect = planoImg.getBoundingClientRect();
+          const x = Math.max(0, Math.min(100, ((e.clientX - rect.left) / rect.width) * 100));
+          const y = Math.max(0, Math.min(100, ((e.clientY - rect.top) / rect.height) * 100));
+          const puntoId = movingPuntoId;
+          const pinEl = document.querySelector('.pin[data-punto-id="' + puntoId + '"]');
+          placeHint.textContent = 'Guardando nueva posición...';
+          try {
+            const res = await fetch('/app/plano-pin', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ puntoId, x, y })
+            });
+            const body = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error((body.error || 'Error del servidor') + (body.debug ? ' — ' + body.debug : ''));
+            if (pinEl) {
+              pinEl.style.left = x + '%';
+              pinEl.style.top = y + '%';
+            }
+            placeHint.textContent = '';
+          } catch (err) {
+            placeHint.textContent = err.message || 'No se pudo mover el punto.';
+          }
+          exitMoveMode();
+          return;
+        }
+
         if (!placing) return;
         const rect = planoImg.getBoundingClientRect();
         const x = ((e.clientX - rect.left) / rect.width) * 100;
         const y = ((e.clientY - rect.top) / rect.height) * 100;
         pendingCoords = { x: Math.max(0, Math.min(100, x)), y: Math.max(0, Math.min(100, y)) };
         picker.style.display = 'flex';
-        placing = false;
-        stage.classList.remove('placing');
+        exitPlaceMode();
         placeHint.textContent = '';
       });
 

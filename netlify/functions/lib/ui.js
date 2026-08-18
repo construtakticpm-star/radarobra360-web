@@ -73,6 +73,10 @@ textarea{resize:vertical;}
   margin-top:2px;background:rgba(8,18,33,0.85);color:#fff;font-size:0.68rem;font-weight:700;
   padding:2px 8px;border-radius:999px;white-space:nowrap;
 }
+.plano-stage.moving{cursor:cell;}
+.pin--moving .pin__dot{background:#fff;box-shadow:0 0 0 4px rgba(14,165,233,0.55),0 2px 6px rgba(0,0,0,0.4);animation:pin-pulse 1s ease-in-out infinite;}
+.pin--moving .pin__label{background:var(--cyan);color:#04141f;}
+@keyframes pin-pulse{0%,100%{transform:rotate(-45deg) scale(1);}50%{transform:rotate(-45deg) scale(1.3);}}
 .pin-picker{
   position:fixed;inset:0;background:rgba(8,18,33,0.6);display:flex;align-items:center;justify-content:center;
   z-index:50;padding:20px;

@@ -208,7 +208,8 @@ exports.handler = async (event) => {
     return {
       id: p.id, nombre: p.nombre, registros: p.registros || [],
       estatusActual: (ultimo && ultimo.estatus) || "pendiente",
-      responsableActualId: (ultimo && ultimo.responsableId) || null
+      responsableActualId: (ultimo && ultimo.responsableId) || null,
+      etiquetas: p.etiquetas || []
     };
   })).replace(/</g, "\\u003c");
   const usuariosDataJson = JSON.stringify(usuarios).replace(/</g, "\\u003c");
@@ -250,10 +251,16 @@ exports.handler = async (event) => {
             </div>
             <div class="plano-detail__body">
               <div class="plano-detail__actions">
-                <button type="button" class="btn btn--ghost btn--small" id="exportBtn" style="color:var(--navy); border-color:var(--border);">🖨️ Exportar</button>
-                <button type="button" class="btn btn--ghost btn--small" id="shareBtn" style="color:var(--navy); border-color:var(--border);">📤 Compartir</button>
+                <div class="report-menu" id="reportMenu">
+                  <button type="button" class="btn btn--ghost btn--small" id="reportMenuBtn" style="color:var(--navy); border-color:var(--border);">📄 Crear informe</button>
+                  <div class="report-menu__dropdown" id="reportMenuDropdown">
+                    <button type="button" id="exportBtn">🖨️ Exportar</button>
+                    <button type="button" id="shareBtn">📤 Compartir</button>
+                  </div>
+                </div>
                 <a id="detailAddLink" class="btn btn--primary btn--small" href="#">＋ Agregar aquí</a>
               </div>
+              <div class="plano-detail__tags" id="detailTags"></div>
               <p class="plano-detail__responsable" id="detailResponsable"></p>
 
               <div id="detailRegistros"></div>
@@ -286,9 +293,12 @@ exports.handler = async (event) => {
       const detailEmpty = document.getElementById('detailEmpty');
       const detailContent = document.getElementById('detailContent');
       const detailName = document.getElementById('detailName');
+      const detailTags = document.getElementById('detailTags');
       const detailResponsable = document.getElementById('detailResponsable');
       const detailAddLink = document.getElementById('detailAddLink');
       const detailRegistros = document.getElementById('detailRegistros');
+      const reportMenuBtn = document.getElementById('reportMenuBtn');
+      const reportMenuDropdown = document.getElementById('reportMenuDropdown');
       const exportBtn = document.getElementById('exportBtn');
       const shareBtn = document.getElementById('shareBtn');
       let currentPuntoId = null;
@@ -300,6 +310,12 @@ exports.handler = async (event) => {
       const quickVideoInput = document.getElementById('quickVideo');
       const quickUploadBtn = document.getElementById('quickUploadBtn');
       const quickUploadStatus = document.getElementById('quickUploadStatus');
+
+      reportMenuBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        reportMenuDropdown.classList.toggle('report-menu__dropdown--open');
+      });
+      document.addEventListener('click', () => reportMenuDropdown.classList.remove('report-menu__dropdown--open'));
 
       exportBtn.addEventListener('click', () => window.print());
       shareBtn.addEventListener('click', () => {
@@ -445,6 +461,47 @@ exports.handler = async (event) => {
         }).join('');
       }
 
+      // Color determinista por texto: la misma etiqueta siempre cae en el
+      // mismo tono, y etiquetas distintas casi siempre caen en tonos
+      // distintos, sin necesidad de guardar un color aparte.
+      function tagHue(str) {
+        let hash = 0;
+        for (let i = 0; i < str.length; i++) hash = (hash * 31 + str.charCodeAt(i)) % 360;
+        return hash;
+      }
+
+      function renderTags(punto) {
+        const chips = (punto.etiquetas || []).map(t => {
+          const hue = tagHue(t);
+          return '<span class="tag-chip" style="background:hsl(' + hue + ',65%,90%);color:hsl(' + hue + ',60%,28%);">' + escHtml(t) + '</span>';
+        }).join('');
+        detailTags.innerHTML = chips
+          + '<form class="tag-add" id="tagAddForm">'
+          + '<input type="text" id="tagInput" placeholder="nueva etiqueta" maxlength="30">'
+          + '<button type="submit" class="tag-add__btn" title="Agregar etiqueta">＋</button>'
+          + '</form>';
+
+        document.getElementById('tagAddForm').addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const input = document.getElementById('tagInput');
+          const raw = input.value.trim();
+          if (!raw) return;
+          try {
+            const res = await fetch('/app/plano-tag', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ proyectoId: PROYECTO_ID, puntoId: punto.id, etiqueta: raw })
+            });
+            const body = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(body.error || 'Error del servidor');
+            punto.etiquetas = body.etiquetas;
+            renderTags(punto);
+          } catch (err) {
+            alert(err.message || 'No se pudo agregar la etiqueta.');
+          }
+        });
+      }
+
       let selectedWeekKey = null;
 
       function renderDetail(puntoId) {
@@ -464,6 +521,8 @@ exports.handler = async (event) => {
         detailContent.style.display = 'block';
         detailName.textContent = punto.nombre;
         detailAddLink.href = '/app/registrar?proyecto=' + encodeURIComponent(PROYECTO_ID) + '&punto=' + encodeURIComponent(punto.nombre);
+
+        renderTags(punto);
 
         const responsableActual = punto.responsableActualId ? USUARIOS_DATA.find(u => u.id === punto.responsableActualId) : null;
         detailResponsable.textContent = responsableActual ? '👤 ' + responsableActual.nombre : 'Abierto';
@@ -640,7 +699,7 @@ exports.handler = async (event) => {
       function placePinInstant(id, nombre, x, y) {
         let punto = PUNTOS_DATA.find(p => p.id === id);
         if (!punto) {
-          punto = { id: id, nombre: nombre, registros: [], estatusActual: 'pendiente', responsableActualId: null };
+          punto = { id: id, nombre: nombre, registros: [], estatusActual: 'pendiente', responsableActualId: null, etiquetas: [] };
           PUNTOS_DATA.push(punto);
         }
 
@@ -690,7 +749,7 @@ exports.handler = async (event) => {
       // (createObjectURL) para verse de inmediato, sin esperar al servidor.
       function addUnplacedItem(id, nombre, fotos, video) {
         if (!PUNTOS_DATA.find(p => p.id === id)) {
-          PUNTOS_DATA.push({ id: id, nombre: nombre, registros: [], estatusActual: 'pendiente', responsableActualId: null });
+          PUNTOS_DATA.push({ id: id, nombre: nombre, registros: [], estatusActual: 'pendiente', responsableActualId: null, etiquetas: [] });
         }
         const files = (fotos || []).map(f => ({ url: URL.createObjectURL(f), video: false }));
         if (video) files.push({ url: URL.createObjectURL(video), video: true });

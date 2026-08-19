@@ -71,6 +71,11 @@ p.lead{color:var(--muted);margin-bottom:28px;border-left:3px solid var(--border)
 .alert-banner-list{display:flex;flex-direction:column;gap:8px;}
 .alert-banner{background:#fdeceb;border:1px solid #e8a89e;color:#a13a2e;border-radius:10px;padding:10px 14px;font-size:0.85rem;}
 .alert-banner__meta{color:#8a6b0f;font-weight:600;}
+.hoy-panel{margin-bottom:24px;}
+.hoy-panel .alert-banner-list{margin:10px 0 4px;}
+.hoy-panel__cols{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:10px;}
+.hoy-panel__col-title{font-size:0.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.03em;margin-bottom:6px;}
+@media (max-width:640px){.hoy-panel__cols{grid-template-columns:1fr;gap:4px;}}
 
 .informe-actions{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap;}
 .informe-actions .back{margin-bottom:0;}
@@ -259,9 +264,9 @@ textarea{resize:vertical;}
 }
 
 @media print{
-  body{background:#fff;}
-  .topbar,.plano-toolbar,.page-actions,.lightbox,.plano-stage-col,#replaceInput,.plano-detail__actions,.tag-add,.week-bars,.media-item__delete,.media-item__share,.registro__notify,.registro__edit,.registro__edit-toggle,.informe-actions{display:none !important;}
-  .wrap,.wrap--wide{max-width:none;padding:0;margin:0;}
+  body,body.radar-bg{background:#fff;}
+  .topbar,.plano-toolbar,.page-actions,.lightbox,.plano-stage-col,#replaceInput,.plano-detail__actions,.tag-add,.week-bars,.media-item__delete,.media-item__share,.registro__notify,.registro__edit,.registro__edit-toggle,.informe-actions,.hoy-panel{display:none !important;}
+  .wrap,.wrap--wide,.wrap--narrow{max-width:none;padding:0;margin:0;}
   .plano-layout{display:block;}
   .plano-detail{position:static;max-height:none;overflow:visible;border:none;padding:0;box-shadow:none;}
   .plano-detail__titlebar{background:none;padding:0 0 10px;}
@@ -269,6 +274,15 @@ textarea{resize:vertical;}
   .plano-detail__responsable{color:var(--navy);background:var(--cream);}
   .registro{break-inside:avoid;border:1px solid #ccc;box-shadow:none;}
   .registro__media img,.registro__media video{break-inside:avoid;}
+
+  .informe-page .eyebrow{margin-bottom:6px;}
+  .informe-page h1{margin-bottom:4px;font-size:1.25rem;border-bottom-width:2px;}
+  .informe-page p.lead{margin-bottom:10px;font-size:0.8rem;}
+  .informe-stage{height:360px;margin-bottom:14px;background:#fff;border:1px solid var(--border);break-inside:avoid;}
+  .informe-stage img{width:100%;height:100%;object-fit:contain;}
+  .informe-pin__label{background:rgba(13,22,34,0.9);}
+  .informe-lista{break-inside:avoid;}
+  .informe-row{break-inside:avoid;padding:6px 0;font-size:0.8rem;}
 }
 `;
 
@@ -297,9 +311,7 @@ function topbar(proyectoId, proyectoNombre) {
   const actions = proyectoId
     ? `<a href="/app${q}" class="btn btn--ghost">⬅ Panel principal</a>
        <a href="/app" class="btn btn--ghost">📁 Proyectos</a>
-       <a href="/app/plano${q}" class="btn btn--ghost">📡 RadarObra360</a>
-       <a href="/app/eventos${q}" class="btn btn--ghost">🕐 Hoy</a>
-       <a href="/app/registrar${q}" class="btn btn--primary">＋ Registrar</a>`
+       <a href="/app/plano${q}" class="btn btn--ghost">📡 RadarObra360</a>`
     : "";
   return `<header class="topbar">
     <div class="topbar__left">

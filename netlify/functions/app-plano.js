@@ -1,6 +1,7 @@
 const { checkAuth } = require("./lib/auth");
 const { getData, findProyecto } = require("./lib/store");
 const { esc, shell, topbar, lightboxMarkup, lightboxScript } = require("./lib/ui");
+const { resumenHoy } = require("./lib/eventos");
 
 exports.handler = async (event) => {
   const auth = checkAuth(event);
@@ -101,6 +102,7 @@ exports.handler = async (event) => {
   const unplaced = puntos.filter(p => p.x == null || p.y == null);
   const usuarios = data.usuarios || [];
   const horaCierre = proyecto.horaCierre || "18:00";
+  const hoy = resumenHoy(data, proyecto, proyectoId);
 
   // El pin se pinta según si el frente tiene responsable asignado en su
   // registro más reciente, no según su estatus.
@@ -217,6 +219,35 @@ exports.handler = async (event) => {
   })).replace(/</g, "\\u003c");
   const usuariosDataJson = JSON.stringify(usuarios).replace(/</g, "\\u003c");
 
+  // Sección "Hoy" integrada directamente en la interfaz del plano (no es
+  // una página aparte): alertas de puntos sin asignar 4+ horas, y las
+  // asignaciones/completados de hoy — se reinicia solo porque filtra por
+  // la fecha de hoy, el historial completo sigue en cada punto.
+  const hoyAlertasHtml = hoy.alertas.length
+    ? `<div class="alert-banner-list">${hoy.alertas.map(a => `<div class="alert-banner">⚠️ <strong>${esc(a.punto.nombre)}</strong>: Punto aún sin asignar, Peligro próximo <span class="alert-banner__meta">(sin asignar hace ${a.horas}h)</span></div>`).join("")}</div>`
+    : "";
+  const hoyAsignacionesHtml = hoy.asignaciones.length
+    ? hoy.asignaciones.map(e => `<div class="evento-row"><span class="evento-row__icon">🧷</span><span class="evento-row__text"><strong>${esc(e.puntoNombre)}</strong> se ha asignado a <strong>${esc(e.responsableNombre || "—")}</strong> · ${esc(e.hora)}</span></div>`).join("")
+    : `<p class="hint">Sin asignaciones todavía hoy.</p>`;
+  const hoyCompletadosHtml = hoy.completados.length
+    ? hoy.completados.map(e => `<div class="evento-row"><span class="evento-row__icon">✅</span><span class="evento-row__text"><strong>${esc(e.responsableNombre || "Sin asignar")}</strong> marcó Listo a <strong>${esc(e.puntoNombre)}</strong> · ${esc(e.hora)}</span></div>`).join("")
+    : `<p class="hint">Nada marcado como Listo todavía hoy.</p>`;
+  const hoyPanelHtml = `
+    <div class="card hoy-panel">
+      <p class="eyebrow">Hoy · ${esc(hoy.hoy)}</p>
+      ${hoyAlertasHtml}
+      <div class="hoy-panel__cols">
+        <div class="hoy-panel__col">
+          <p class="hoy-panel__col-title">Asignaciones de hoy</p>
+          ${hoyAsignacionesHtml}
+        </div>
+        <div class="hoy-panel__col">
+          <p class="hoy-panel__col-title">Completados de hoy</p>
+          ${hoyCompletadosHtml}
+        </div>
+      </div>
+    </div>`;
+
   const body = `
     ${topbar(proyectoId, proyecto.nombre)}
     <div class="wrap wrap--wide">
@@ -256,6 +287,8 @@ exports.handler = async (event) => {
         <div class="status" id="replaceStatus"></div>
         <div class="status" id="horaCierreStatus"></div>
       </div>
+
+      ${hoyPanelHtml}
 
       <div class="plano-layout">
         <div class="plano-stage-col">

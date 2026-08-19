@@ -88,11 +88,6 @@
   status = 200
 
 [[redirects]]
-  from = "/app/eventos"
-  to = "/.netlify/functions/app-eventos"
-  status = 200
-
-[[redirects]]
   from = "/app/proyecto-horacierre"
   to = "/.netlify/functions/app-proyecto-horacierre"
   status = 200

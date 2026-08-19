@@ -97,6 +97,11 @@
   to = "/.netlify/functions/app-proyecto-horacierre"
   status = 200
 
+[[redirects]]
+  from = "/app/informe-responsable"
+  to = "/.netlify/functions/app-informe-responsable"
+  status = 200
+
 # Block direct static access to function source.
 [[redirects]]
   from = "/netlify/*"

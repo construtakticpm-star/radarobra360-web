@@ -239,6 +239,17 @@ exports.handler = async (event) => {
             <input type="time" id="horaCierreInput" value="${esc(horaCierre)}">
             <button type="button" class="btn btn--ghost btn--small" id="horaCierreSaveBtn">Guardar</button>
           </div>
+          <div class="report-menu" id="informeMenu">
+            <button type="button" class="btn btn--ghost" id="informeMenuBtn">📄 Enviar informe</button>
+            <div class="report-menu__dropdown report-menu__dropdown--form" id="informeMenuDropdown">
+              <label for="informeResponsable" class="report-menu__label">Responsable asignado</label>
+              <select id="informeResponsable">
+                ${usuarios.map(u => `<option value="${esc(u.id)}">${esc(u.nombre)}</option>`).join("")}
+              </select>
+              ${usuarios.length ? "" : `<p class="hint" style="margin:6px 0;">Todavía no hay usuarios cargados.</p>`}
+              <button type="button" class="btn btn--primary btn--small" id="informeGenerarBtn" ${usuarios.length ? "" : "disabled"}>Generar informe (PDF)</button>
+            </div>
+          </div>
           <span class="hint" id="placeHint"></span>
         </div>
         <input type="file" id="replaceInput" accept="image/*" style="display:none;">
@@ -267,8 +278,8 @@ exports.handler = async (event) => {
                 <div class="report-menu" id="reportMenu">
                   <button type="button" class="btn btn--ghost btn--small" id="reportMenuBtn" style="color:var(--navy); border-color:var(--border);">📄 Crear informe</button>
                   <div class="report-menu__dropdown" id="reportMenuDropdown">
-                    <button type="button" id="exportBtn">🖨️ Exportar</button>
-                    <button type="button" id="shareBtn">📤 Compartir</button>
+                    <button type="button" class="report-menu__item" id="exportBtn">🖨️ Exportar</button>
+                    <button type="button" class="report-menu__item" id="shareBtn">📤 Compartir</button>
                   </div>
                 </div>
                 <a id="detailAddLink" class="btn btn--primary btn--small" href="#">＋ Agregar aquí</a>
@@ -308,6 +319,10 @@ exports.handler = async (event) => {
       const horaCierreInput = document.getElementById('horaCierreInput');
       const horaCierreSaveBtn = document.getElementById('horaCierreSaveBtn');
       const horaCierreStatus = document.getElementById('horaCierreStatus');
+      const informeMenuBtn = document.getElementById('informeMenuBtn');
+      const informeMenuDropdown = document.getElementById('informeMenuDropdown');
+      const informeResponsable = document.getElementById('informeResponsable');
+      const informeGenerarBtn = document.getElementById('informeGenerarBtn');
 
       const detailEmpty = document.getElementById('detailEmpty');
       const detailContent = document.getElementById('detailContent');
@@ -335,6 +350,20 @@ exports.handler = async (event) => {
         reportMenuDropdown.classList.toggle('report-menu__dropdown--open');
       });
       document.addEventListener('click', () => reportMenuDropdown.classList.remove('report-menu__dropdown--open'));
+
+      informeMenuBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        informeMenuDropdown.classList.toggle('report-menu__dropdown--open');
+      });
+      document.addEventListener('click', () => informeMenuDropdown.classList.remove('report-menu__dropdown--open'));
+      informeGenerarBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const responsableId = informeResponsable.value;
+        if (!responsableId) return;
+        const url = '/app/informe-responsable?proyecto=' + encodeURIComponent(PROYECTO_ID) + '&responsable=' + encodeURIComponent(responsableId);
+        window.open(url, '_blank');
+        informeMenuDropdown.classList.remove('report-menu__dropdown--open');
+      });
 
       exportBtn.addEventListener('click', () => window.print());
       shareBtn.addEventListener('click', () => {

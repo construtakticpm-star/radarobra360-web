@@ -147,6 +147,7 @@ textarea{resize:vertical;}
 .plano-stage{position:relative;background:#000;border-radius:14px;overflow:hidden;line-height:0;cursor:crosshair;user-select:none;}
 .plano-stage img{width:100%;display:block;pointer-events:none;}
 .plano-stage.placing{cursor:cell;}
+.plano-stage.plano-oculto img{visibility:hidden;}
 .pin{
   position:absolute;transform:translate(-50%,-100%);
   display:flex;flex-direction:column;align-items:center;

@@ -231,7 +231,9 @@ exports.handler = async (event) => {
           <button type="button" class="btn btn--ghost" id="deleteBtn" style="color:#ff8a75;">🗑️ Eliminar punto</button>
           <button type="button" class="btn btn--ghost" id="replaceBtn">🔄 Reemplazar plano</button>
           <button type="button" class="btn btn--ghost audio-toggle">🔊 Sonido: ON</button>
+          <button type="button" class="btn btn--ghost" id="planoToggleBtn">🗺️ Ocultar plano</button>
           <button type="button" class="btn btn--ghost" id="signalToggleBtn">🛰️ Señal: ON</button>
+          <button type="button" class="btn btn--ghost" id="radarModeBtn">📡 Modo radar: OFF</button>
           <div class="hora-cierre">
             <label for="horaCierreInput">Cierre de jornada</label>
             <input type="time" id="horaCierreInput" value="${esc(horaCierre)}">
@@ -300,7 +302,9 @@ exports.handler = async (event) => {
       const replaceBtn = document.getElementById('replaceBtn');
       const replaceInput = document.getElementById('replaceInput');
       const replaceStatus = document.getElementById('replaceStatus');
+      const planoToggleBtn = document.getElementById('planoToggleBtn');
       const signalToggleBtn = document.getElementById('signalToggleBtn');
+      const radarModeBtn = document.getElementById('radarModeBtn');
       const horaCierreInput = document.getElementById('horaCierreInput');
       const horaCierreSaveBtn = document.getElementById('horaCierreSaveBtn');
       const horaCierreStatus = document.getElementById('horaCierreStatus');
@@ -405,11 +409,22 @@ exports.handler = async (event) => {
 
       // Señal circular en los pines "sin asignar": se intensifica (más
       // rápida, más roja) conforme se acerca la hora de cierre de jornada.
-      // El interruptor y su estado se guardan solo en este navegador.
+      // "Ocultar plano" y "Señal" se guardan por separado en este navegador;
+      // "Modo radar" es un atajo que prende/apaga ambos a la vez.
       const SIGNAL_MUTE_KEY = 'radarobra360_signal_off';
+      const PLANO_OCULTO_KEY = 'radarobra360_plano_oculto';
 
       function signalDisabled() {
         return localStorage.getItem(SIGNAL_MUTE_KEY) === 'true';
+      }
+      function planoOculto() {
+        return localStorage.getItem(PLANO_OCULTO_KEY) === 'true';
+      }
+      function setSignalDisabled(off) {
+        localStorage.setItem(SIGNAL_MUTE_KEY, off ? 'true' : 'false');
+      }
+      function setPlanoOculto(oculto) {
+        localStorage.setItem(PLANO_OCULTO_KEY, oculto ? 'true' : 'false');
       }
 
       function updateSignalToggleUI() {
@@ -417,12 +432,36 @@ exports.handler = async (event) => {
         signalToggleBtn.textContent = off ? '🛰️ Señal: OFF' : '🛰️ Señal: ON';
         stage.classList.toggle('signal-off', off);
       }
+      function updatePlanoToggleUI() {
+        const oculto = planoOculto();
+        planoToggleBtn.textContent = oculto ? '🗺️ Mostrar plano' : '🗺️ Ocultar plano';
+        stage.classList.toggle('plano-oculto', oculto);
+      }
+      function updateRadarModeUI() {
+        const on = planoOculto() && !signalDisabled();
+        radarModeBtn.textContent = on ? '📡 Modo radar: ON' : '📡 Modo radar: OFF';
+      }
+      function refreshToggles() {
+        updateSignalToggleUI();
+        updatePlanoToggleUI();
+        updateRadarModeUI();
+      }
 
       signalToggleBtn.addEventListener('click', () => {
-        localStorage.setItem(SIGNAL_MUTE_KEY, signalDisabled() ? 'false' : 'true');
-        updateSignalToggleUI();
+        setSignalDisabled(!signalDisabled());
+        refreshToggles();
       });
-      updateSignalToggleUI();
+      planoToggleBtn.addEventListener('click', () => {
+        setPlanoOculto(!planoOculto());
+        refreshToggles();
+      });
+      radarModeBtn.addEventListener('click', () => {
+        const turnOn = !(planoOculto() && !signalDisabled());
+        setPlanoOculto(turnOn);
+        setSignalDisabled(!turnOn);
+        refreshToggles();
+      });
+      refreshToggles();
 
       // 0 = recién empezó el día, sin prisa. 1 = ya se llegó (o pasó) la
       // hora de cierre. Con eso se interpola duración/color del pulso.

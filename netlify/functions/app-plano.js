@@ -220,32 +220,32 @@ exports.handler = async (event) => {
   const usuariosDataJson = JSON.stringify(usuarios).replace(/</g, "\\u003c");
 
   // Sección "Hoy" integrada directamente en la interfaz del plano (no es
-  // una página aparte): alertas de puntos sin asignar 4+ horas, y las
-  // asignaciones/completados de hoy — se reinicia solo porque filtra por
-  // la fecha de hoy, el historial completo sigue en cada punto.
+  // una página aparte), en formato compacto tipo chat: un solo feed
+  // cronológico (más reciente arriba) con asignaciones y completados de
+  // hoy, más alertas de puntos sin asignar 4+ horas. Se "reinicia" solo
+  // porque filtra por la fecha de hoy — el historial completo sigue en
+  // cada punto.
   const hoyAlertasHtml = hoy.alertas.length
-    ? `<div class="alert-banner-list">${hoy.alertas.map(a => `<div class="alert-banner">⚠️ <strong>${esc(a.punto.nombre)}</strong>: Punto aún sin asignar, Peligro próximo <span class="alert-banner__meta">(sin asignar hace ${a.horas}h)</span></div>`).join("")}</div>`
+    ? `<div class="alert-banner-list">${hoy.alertas.map(a => `<div class="alert-banner">⚠️ <strong>${esc(a.punto.nombre)}</strong>: Punto aún sin asignar, Peligro próximo <span class="alert-banner__meta">(hace ${a.horas}h)</span></div>`).join("")}</div>`
     : "";
-  const hoyAsignacionesHtml = hoy.asignaciones.length
-    ? hoy.asignaciones.map(e => `<div class="evento-row"><span class="evento-row__icon">🧷</span><span class="evento-row__text"><strong>${esc(e.puntoNombre)}</strong> se ha asignado a <strong>${esc(e.responsableNombre || "—")}</strong> · ${esc(e.hora)}</span></div>`).join("")
-    : `<p class="hint">Sin asignaciones todavía hoy.</p>`;
-  const hoyCompletadosHtml = hoy.completados.length
-    ? hoy.completados.map(e => `<div class="evento-row"><span class="evento-row__icon">✅</span><span class="evento-row__text"><strong>${esc(e.responsableNombre || "Sin asignar")}</strong> marcó Listo a <strong>${esc(e.puntoNombre)}</strong> · ${esc(e.hora)}</span></div>`).join("")
-    : `<p class="hint">Nada marcado como Listo todavía hoy.</p>`;
+  const hoyFeed = [
+    ...hoy.asignaciones.map(e => ({ ...e, kind: "asignacion" })),
+    ...hoy.completados.map(e => ({ ...e, kind: "completado" }))
+  ].sort((a, b) => b.timestamp.localeCompare(a.timestamp));
+  const hoyChatHtml = hoyFeed.length
+    ? hoyFeed.map(e => {
+        const icon = e.kind === "asignacion" ? "🧷" : "✅";
+        const texto = e.kind === "asignacion"
+          ? `<strong>${esc(e.puntoNombre)}</strong> se ha asignado a <strong>${esc(e.responsableNombre || "—")}</strong>`
+          : `<strong>${esc(e.responsableNombre || "Sin asignar")}</strong> marcó Listo a <strong>${esc(e.puntoNombre)}</strong>`;
+        return `<div class="hoy-chat__msg"><span class="hoy-chat__icon">${icon}</span><div class="hoy-chat__bubble">${texto}<span class="hoy-chat__time">${esc(e.hora)}</span></div></div>`;
+      }).join("")
+    : `<p class="hint" style="padding:4px 2px;">Sin movimientos todavía hoy.</p>`;
   const hoyPanelHtml = `
-    <div class="card hoy-panel">
+    <div class="card hoy-panel hoy-panel--chat">
       <p class="eyebrow">Hoy · ${esc(hoy.hoy)}</p>
       ${hoyAlertasHtml}
-      <div class="hoy-panel__cols">
-        <div class="hoy-panel__col">
-          <p class="hoy-panel__col-title">Asignaciones de hoy</p>
-          ${hoyAsignacionesHtml}
-        </div>
-        <div class="hoy-panel__col">
-          <p class="hoy-panel__col-title">Completados de hoy</p>
-          ${hoyCompletadosHtml}
-        </div>
-      </div>
+      <div class="hoy-chat">${hoyChatHtml}</div>
     </div>`;
 
   const body = `

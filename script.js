@@ -1,7 +1,7 @@
 const CONFIG = {
-  whatsappNumber: "529999988676", // mismo número que construtaktic.com — confirmar si RadarObra360 usa una línea distinta
+  whatsappNumber: "529999988676", // mismo número que construtaktic.com, es intencional
   whatsappMessage: "Hola. Quiero saber más sobre RadarObra360 para dar seguimiento visual a mi obra.",
-  ga4Id: "",
+  ga4Id: "G-56WC2HQ3FY",
   metaPixelId: ""
 };
 

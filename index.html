@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RadarObra360 | Seguimiento Visual de Obra</title>
-<meta name="description" content="RadarObra360 convierte las fotos que ya toma tu equipo en una línea de tiempo visual clara y comparable, semana a semana, frente por frente.">
-<link rel="canonical" href="https://radarobra.ai/">
+<title>RadarObra360 | Radar visual para seguimiento de obra</title>
+<meta name="description" content="Organiza las fotos del día a día sobre el plano de tu obra y visualiza ubicación, responsable y estatus en una sola vista.">
+<link rel="canonical" href="https://radarobra360.com.mx/">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -18,7 +18,7 @@
 <header class="nav">
   <a href="#top" class="nav__brand">
     <span class="nav__logo-mark">◎</span>
-    <span class="nav__brand-text">RadarObra<span class="nav__brand-360">360</span><span class="nav__brand-version">V2.0</span></span>
+    <span class="nav__brand-text">RadarObra<span class="nav__brand-360">360</span></span>
   </a>
   <nav class="nav__links">
     <a href="#como-funciona">Cómo funciona</a>
@@ -41,121 +41,200 @@
 <main>
 
   <!-- HERO -->
-  <section class="hero">
+  <section class="hero hero--centered">
     <div class="hero__text">
-      <p class="eyebrow">RadarObra360 · Visual de Obra</p>
-      <h1>Ve cómo evoluciona tu obra, sin estar ahí todos los días.</h1>
-      <p class="hero__sub">RadarObra360 convierte fotos de obra en una línea de tiempo clara y comparable para que puedas ver cómo cambia cada frente, semana a semana.</p>
-      <p class="hero__text-body">Tu equipo sigue tomando fotos con el celular que ya usa, por frente. RadarObra360 las ordena y las fecha — de fotos sueltas en WhatsApp a evidencia visual que sí puedes comparar.</p>
+      <p class="eyebrow">RadarObra360 · Beta</p>
+      <h1>Tu obra, de un vistazo.</h1>
+      <p class="hero__sub">RadarObra360 organiza las fotos del día a día sobre el SITE de tu obra, mostrando dónde ocurre, quién es responsable y cuál es su estatus.</p>
+      <p class="hero__text-body">Menos fotos perdidas en WhatsApp. Más claridad visual de lo que está pasando.</p>
       <div class="hero__actions">
-        <a href="#formulario" class="btn btn--primary" data-track="hero_cta">SOLICITAR DEMO</a>
+        <a href="#formulario" class="btn btn--primary" data-track="cta_demo_hero">SOLICITAR DEMO</a>
         <a href="#como-funciona" class="btn btn--ghost" data-track="hero_cta_secundario">VER CÓMO FUNCIONA</a>
       </div>
-      <p class="microcopy">Sin cámaras nuevas. Sin apps complicadas. Empezamos con el celular que ya usa tu equipo.</p>
+    </div>
+  </section>
+
+  <!-- PRODUCTO: MOCKUP DEL SITE -->
+  <section class="section site-demo" id="producto">
+    <p class="eyebrow">Así se ve</p>
+    <h2>El SITE de tu obra, con contexto.</h2>
+    <p class="section__lead">Selecciona un punto del plano — así es como se organiza cada actualización dentro de RadarObra360.</p>
+
+    <div class="site-demo__layout">
+      <div class="site-demo__plano" id="siteDemoPlano">
+        <svg class="site-demo__bg" viewBox="0 0 400 250" preserveAspectRatio="none" aria-hidden="true">
+          <rect width="400" height="250" fill="#e7ecef"/>
+          <rect x="18" y="18" width="150" height="95" fill="none" stroke="#a9b7c2" stroke-width="2"/>
+          <rect x="188" y="18" width="194" height="55" fill="none" stroke="#a9b7c2" stroke-width="2"/>
+          <rect x="18" y="133" width="364" height="99" fill="none" stroke="#a9b7c2" stroke-width="2"/>
+          <line x1="188" y1="18" x2="188" y2="232" stroke="#a9b7c2" stroke-width="2"/>
+        </svg>
+        <!-- puntos insertados por script.js (ver SITE_DEMO_POINTS) -->
+      </div>
+
+      <div class="site-demo__card" id="siteDemoCard"></div>
     </div>
 
-    <div class="hero__visual">
-      <div class="timeline-card">
-        <div class="timeline-card__tag">Vista ilustrativa</div>
-        <div class="timeline-card__head">
-          <span class="timeline-card__front">Frente: Cimentación</span>
-          <span class="timeline-card__status timeline-card__status--ok">En avance</span>
-        </div>
-        <div class="timeline-card__row">
-          <div class="photo-chip photo-chip--1"><span>Sem 18</span></div>
-          <div class="photo-chip photo-chip--2"><span>Sem 19</span></div>
-          <div class="photo-chip photo-chip--3"><span>Sem 20</span></div>
-          <div class="photo-chip photo-chip--4 photo-chip--active"><span>Sem 21</span></div>
-        </div>
-        <p class="timeline-card__caption">📷 12 fotos esta semana · línea de tiempo semanal por frente</p>
-      </div>
+    <div class="site-demo__legend" aria-hidden="true">
+      <span><i style="background:var(--cyan);"></i> Terminado</span>
+      <span><i style="background:var(--amber);"></i> En proceso</span>
+      <span><i style="background:var(--danger);"></i> Requiere atención</span>
+      <span><i style="background:var(--muted);"></i> Sin actualización</span>
+    </div>
+
+    <div class="site-demo__questions">
+      <div>¿Qué pasa?</div>
+      <div>¿Dónde?</div>
+      <div>¿Quién lo atiende?</div>
+      <div>¿En qué estado está?</div>
     </div>
   </section>
 
   <!-- PROBLEMA -->
   <section class="section" id="problema">
-    <h2>Cuando no puedes estar en obra, dependes de lo que te cuenten.</h2>
-    <ul class="check-list">
-      <li>¿Puedes comprobar visualmente si lo que te reportan corresponde con lo que se ve en sitio?</li>
-      <li>¿Las fotos de la obra están dispersas en chats de WhatsApp, sin orden ni fecha clara?</li>
-      <li>¿Te cuesta comparar cómo se veía un frente hace 2 semanas contra hoy?</li>
-      <li>¿Necesitas mostrarle a un cliente o inversionista cómo va evolucionando la obra, sin llevarlo a sitio?</li>
-      <li>¿Descubres un problema visual — grietas, desniveles, mal acabado — semanas después de que ocurrió?</li>
-    </ul>
-    <p class="section__closing">No es falta de fotos. Es falta de una forma clara de entender cómo evoluciona la obra.</p>
+    <h2>Las fotos existen. El contexto se pierde.</h2>
+    <div class="grid-4">
+      <div class="audience-card">
+        <h3>WhatsApp</h3>
+        <p>Fotos dispersas entre conversaciones.</p>
+      </div>
+      <div class="audience-card">
+        <h3>Celulares</h3>
+        <p>Información repartida entre diferentes personas.</p>
+      </div>
+      <div class="audience-card">
+        <h3>Carpetas</h3>
+        <p>Fotos difíciles de relacionar con una ubicación.</p>
+      </div>
+      <div class="audience-card">
+        <h3>Reportes</h3>
+        <p>Tiempo utilizado para explicar lo que ya podría verse.</p>
+      </div>
+    </div>
+    <p class="section__closing">RadarObra360 convierte las actualizaciones visuales de la obra en una lectura rápida y contextualizada sobre el SITE.</p>
   </section>
 
-  <!-- SOLUCIÓN -->
+  <!-- CÓMO FUNCIONA -->
   <section class="section section--alt" id="como-funciona">
     <p class="eyebrow">Cómo funciona</p>
-    <h2>De fotos sueltas a una línea de tiempo que se entiende de un vistazo.</h2>
+    <h2>De fotos sueltas a un radar visual de tu obra.</h2>
     <div class="steps">
       <div class="steps__item">
         <span class="steps__num">01</span>
-        <h3>Subes fotos</h3>
-        <p>Tu equipo continúa tomando fotografías desde el celular, por frente.</p>
+        <h3>Captura</h3>
+        <p>Tu equipo toma las fotos del día a día con el celular que ya utiliza.</p>
       </div>
       <div class="steps__item">
         <span class="steps__num">02</span>
-        <h3>Radar las organiza</h3>
-        <p>Se ordenan por fecha, frente y periodo para construir una historia visual comparable.</p>
+        <h3>Ubica</h3>
+        <p>Cada actualización se relaciona con una zona o punto del SITE/plano.</p>
       </div>
       <div class="steps__item">
         <span class="steps__num">03</span>
-        <h3>Comparas evolución</h3>
-        <p>Ves cómo estaba un frente antes y cómo está ahora, sin buscar entre chats o carpetas.</p>
+        <h3>Contextualiza</h3>
+        <p>Agrega responsable y estatus para entender rápidamente la situación.</p>
       </div>
       <div class="steps__item">
         <span class="steps__num">04</span>
-        <h3>Compartes evidencia</h3>
-        <p>Comparte una vista clara con quien necesita revisar el proyecto.</p>
+        <h3>Visualiza</h3>
+        <p>Abre RadarObra360 y recorre visualmente lo que está pasando en la obra.</p>
       </div>
     </div>
+    <p class="steps__flow">CAPTURA → UBICA → CONTEXTUALIZA → VISUALIZA</p>
   </section>
 
-  <p class="differentiator">No solo guardes fotos. Conserva la historia visual de tu obra.</p>
+  <!-- POSICIONAMIENTO -->
+  <section class="section">
+    <p class="eyebrow">Posicionamiento</p>
+    <h2>Un radar visual, no otro sistema administrativo.</h2>
+    <p class="section__lead">RadarObra360 busca aprovechar la información visual que el equipo ya genera y agregar únicamente el contexto necesario para entender la obra.</p>
+    <div class="grid-3">
+      <div class="audience-card">
+        <h3>Ver</h3>
+        <p>Qué está ocurriendo.</p>
+      </div>
+      <div class="audience-card">
+        <h3>Ubicar</h3>
+        <p>Dónde está ocurriendo.</p>
+      </div>
+      <div class="audience-card">
+        <h3>Entender</h3>
+        <p>Responsable y estatus.</p>
+      </div>
+    </div>
+    <p class="section__closing">El objetivo no es convertir a tu equipo en capturistas. Es hacer más útil la información visual que ya generan.</p>
+  </section>
 
   <!-- PARA QUIÉN -->
-  <section class="section" id="para-quien">
+  <section class="section section--alt" id="para-quien">
     <p class="eyebrow">Para quién</p>
     <h2>Para quien necesita ver la obra sin estar todo el tiempo en ella</h2>
-    <div class="audience-grid">
+    <div class="grid-3">
       <div class="audience-card">
-        <h3>Dueño / director de constructora</h3>
-        <p>Maneja varios frentes o proyectos y no puede recorrerlos todos los días.</p>
+        <h3>Dueño / director</h3>
+        <p>Entiende rápidamente qué zonas o frentes requieren atención sin pedir múltiples reportes.</p>
       </div>
       <div class="audience-card">
-        <h3>Desarrollador / inversionista</h3>
-        <p>Necesita evidencia visual organizada del avance, no solo el reporte del contratista.</p>
+        <h3>Residente / PM / supervisor</h3>
+        <p>Organiza visualmente las actualizaciones de diferentes frentes y responsables.</p>
       </div>
       <div class="audience-card">
-        <h3>Residente / superintendente / PM</h3>
-        <p>Documenta avance e incidencias sin perder tiempo armando reportes.</p>
-      </div>
-      <div class="audience-card">
-        <h3>Cliente final</h3>
-        <p>Quiere ver cómo evoluciona su proyecto sin tener que visitarlo en persona.</p>
+        <h3>Desarrollador / cliente</h3>
+        <p>Consulta visualmente la situación de la obra sin depender únicamente de visitas o conversaciones aisladas.</p>
       </div>
     </div>
   </section>
 
-  <!-- QUÉ NO ES -->
-  <section class="section section--alt">
-    <h2>Qué NO es</h2>
-    <p class="section__lead">Para que sepas exactamente qué esperar.</p>
-    <ul class="not-list">
-      <li>Cámaras de vigilancia</li>
-      <li>Vuelo de dron</li>
-      <li>Software de gestión completo</li>
-      <li>Control financiero</li>
-      <li>Supervisión de obra</li>
-      <li>Certificación de avance</li>
-    </ul>
-    <p class="section__closing">RadarObra360 se enfoca en organizar, comparar y conservar evidencia visual. El control integral del proyecto pertenece a otras capas de gestión.</p>
+  <!-- CASOS DE USO -->
+  <section class="section">
+    <p class="eyebrow">Casos de uso</p>
+    <h2>Cómo se usa en el día a día</h2>
+    <div class="grid-4">
+      <div class="audience-card">
+        <h3>Reunión semanal</h3>
+        <p>Recorrer visualmente los puntos relevantes de la obra.</p>
+      </div>
+      <div class="audience-card">
+        <h3>Seguimiento remoto</h3>
+        <p>Consultar lo que está ocurriendo sin pedir nuevas fotografías por WhatsApp.</p>
+      </div>
+      <div class="audience-card">
+        <h3>Revisión de frentes</h3>
+        <p>Ver rápidamente fotografía, ubicación, responsable y estatus.</p>
+      </div>
+      <div class="audience-card">
+        <h3>Comunicación</h3>
+        <p>Compartir una situación visual con mayor contexto.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- HISTÓRICO VISUAL -->
+  <section class="section section--alt" id="historico">
+    <p class="eyebrow">Histórico visual</p>
+    <h2>No solo veas hoy. Mira cómo cambió.</h2>
+    <div class="timeline-card" style="max-width:520px;margin:24px auto 0;">
+      <div class="timeline-card__tag">Vista ilustrativa · Baño 04</div>
+      <div class="timeline-card__row">
+        <div class="photo-chip photo-chip--1"><span>12 Ago</span></div>
+        <div class="photo-chip photo-chip--3"><span>15 Ago</span></div>
+        <div class="photo-chip photo-chip--4 photo-chip--active"><span>18 Ago</span></div>
+      </div>
+      <p class="timeline-card__caption">Cada actualización puede conservarse como parte del histórico visual de esa ubicación.</p>
+    </div>
+  </section>
+
+  <!-- BETA -->
+  <section class="section" style="text-align:center;">
+    <p class="eyebrow">Beta</p>
+    <h2>Prueba RadarObra360 en una obra real.</h2>
+    <p class="section__lead" style="border-left:none;padding-left:0;">Seleccionamos un proyecto y te mostramos cómo podría verse organizado visualmente dentro de RadarObra360.</p>
+    <a href="#formulario" class="btn btn--primary" data-track="cta_demo_mid">SOLICITAR DEMO</a>
+    <p class="microcopy" style="margin-top:16px;">Estamos validando actualmente RadarObra360 con obras reales.</p>
   </section>
 
   <!-- FAQ -->
-  <section class="section" id="faq">
+  <section class="section section--alt" id="faq">
     <p class="eyebrow">Preguntas frecuentes</p>
     <h2>FAQ</h2>
     <div class="faq-list">
@@ -165,15 +244,15 @@
       </details>
       <details class="faq-item">
         <summary>¿Sustituye la supervisión de obra?</summary>
-        <p>No. Es evidencia visual organizada, no reemplaza al residente ni al supervisor.</p>
+        <p>No. Es evidencia visual organizada sobre el SITE, no reemplaza al residente ni al supervisor.</p>
       </details>
       <details class="faq-item">
         <summary>¿Puedo compartir el avance con mi cliente?</summary>
         <p>Sí — ese es justo uno de los usos principales, sin que tenga que ir a la obra.</p>
       </details>
       <details class="faq-item">
-        <summary>¿Funciona para varios proyectos a la vez?</summary>
-        <p>Sí, cada proyecto y frente se organiza por separado.</p>
+        <summary>¿Funciona para varias obras a la vez?</summary>
+        <p>Sí, cada obra y sus puntos se organizan por separado.</p>
       </details>
       <details class="faq-item">
         <summary>¿Tengo que contratar algo más después?</summary>
@@ -182,13 +261,30 @@
     </div>
   </section>
 
+  <!-- QUÉ NO ES -->
+  <section class="section">
+    <h2>Qué NO es</h2>
+    <p class="section__lead">Para que sepas exactamente qué esperar.</p>
+    <ul class="not-list">
+      <li>Sistema CCTV</li>
+      <li>Software financiero</li>
+      <li>ERP</li>
+      <li>BIM</li>
+      <li>Supervisión de obra</li>
+      <li>Certificación</li>
+      <li>PMO</li>
+      <li>Avance automático</li>
+    </ul>
+    <p class="section__closing">RadarObra360 complementa la forma en que hoy documentas visualmente tu obra. No busca reemplazar todos tus sistemas.</p>
+  </section>
+
   <!-- CTA FINAL -->
   <section class="section cta-final">
     <div class="cta-final__content">
-      <h2>Deja de perseguir fotos en WhatsApp para saber cómo va tu obra.</h2>
-      <p>Solicita una demo y te mostramos cómo se vería el avance de tu proyecto en RadarObra360.</p>
-      <a href="#formulario" class="btn btn--primary" data-track="cta_final">SOLICITAR DEMO</a>
-      <p class="microcopy">Sin compromiso. Primero te mostramos cómo funciona.</p>
+      <h2>¿Quieres ver cómo se vería tu obra en Radar?</h2>
+      <p>Muéstranos cómo estás documentando actualmente uno de tus proyectos y te enseñamos cómo podría organizarse visualmente en RadarObra360.</p>
+      <a href="#formulario" class="btn btn--primary" data-track="cta_demo_footer">SOLICITAR DEMO</a>
+      <p class="microcopy">Empezamos con una obra real.</p>
     </div>
   </section>
 
@@ -210,19 +306,35 @@
         <input type="text" id="f-empresa" name="empresa">
       </div>
       <div class="lp-form__row">
-        <label for="f-telefono">WhatsApp / teléfono</label>
+        <label for="f-telefono">WhatsApp</label>
         <input type="tel" id="f-telefono" name="telefono" required>
       </div>
       <div class="lp-form__row">
         <label for="f-correo">Correo</label>
         <input type="email" id="f-correo" name="correo" required>
       </div>
+      <div class="lp-form__row">
+        <label for="f-obras">¿Cuántas obras tienes activas?</label>
+        <input type="text" id="f-obras" name="obras_activas" placeholder="Ej. 2">
+      </div>
+      <div class="lp-form__row">
+        <label for="f-organizacion">¿Cómo organizas hoy las fotos de tus obras?</label>
+        <select id="f-organizacion" name="organizacion_actual">
+          <option value="">Selecciona una opción</option>
+          <option value="whatsapp">WhatsApp</option>
+          <option value="drive">Google Drive / OneDrive / Dropbox</option>
+          <option value="carpetas">Carpetas locales</option>
+          <option value="pdf">Reportes PDF</option>
+          <option value="otro-software">Otro software</option>
+          <option value="sin-sistema">No existe un sistema definido</option>
+        </select>
+      </div>
       <div class="lp-form__row lp-form__row--full">
-        <label for="f-detalle">¿Cuántos frentes o proyectos quieres dar seguimiento?</label>
-        <textarea id="f-detalle" name="detalle" rows="3"></textarea>
+        <label for="f-dificultad">¿Qué es lo que más te cuesta visualizar o entender actualmente de tus obras? (opcional)</label>
+        <textarea id="f-dificultad" name="dificultad" rows="3"></textarea>
       </div>
 
-      <button type="submit" class="btn btn--primary lp-form__submit" data-track="form_submit">SOLICITAR DEMO</button>
+      <button type="submit" class="btn btn--primary lp-form__submit" data-track="form_submit">QUIERO VER UNA DEMO</button>
       <p class="microcopy">Enviar esta información no implica contratación.</p>
     </form>
   </section>
@@ -230,8 +342,8 @@
 </main>
 
 <footer class="footer">
-  <span class="footer__brand">RadarObra<span class="nav__brand-360">360</span><span class="nav__brand-version">V2.0</span></span>
-  <p>© 2026 RadarObra360 V2.0 · un producto de CONSTRUTAKTIC</p>
+  <span class="footer__brand">RadarObra<span class="nav__brand-360">360</span></span>
+  <p>RadarObra360 · Una iniciativa en desarrollo por CONSTRUTAKTIC</p>
   <a href="https://www.instagram.com/construtaktic.mx/" target="_blank" rel="noopener" class="footer__social" data-track="instagram_click">📷 @construtaktic.mx</a>
 </footer>
 

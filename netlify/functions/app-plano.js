@@ -251,52 +251,74 @@ exports.handler = async (event) => {
   const body = `
     ${topbar(proyectoId, proyecto.nombre)}
     <div class="wrap wrap--wide">
-      <div class="control-console">
-        <p class="eyebrow">Mando de RadarObra360 · ${esc(proyecto.nombre)}</p>
-        <h1>Mando de RadarObra360</h1>
-        <p class="lead">Click en un pin para ver sus fotos y video sin salir del plano. Los frentes en estatus "Listo" se quitan de esta vista automáticamente.</p>
-
-        <div class="plano-toolbar">
-          <button class="btn btn--primary" id="placeBtn">📍 Colocar punto</button>
-          <button type="button" class="btn btn--ghost" id="moveBtn">↔️ Mover punto</button>
-          <button type="button" class="btn btn--ghost" id="deleteBtn" style="color:#ff8a75;">🗑️ Eliminar punto</button>
-          <button type="button" class="btn btn--ghost" id="replaceBtn">🔄 Reemplazar plano</button>
-          <button type="button" class="btn btn--ghost audio-toggle">🔊 Sonido: ON</button>
-          <button type="button" class="btn btn--ghost" id="planoToggleBtn">🗺️ Ocultar plano</button>
-          <button type="button" class="btn btn--ghost" id="signalToggleBtn">🛰️ Señal: ON</button>
-          <button type="button" class="btn btn--ghost" id="radarModeBtn">📡 Modo radar: OFF</button>
-          <div class="hora-cierre">
-            <label for="horaCierreInput">Cierre de jornada</label>
-            <input type="time" id="horaCierreInput" value="${esc(horaCierre)}">
-            <button type="button" class="btn btn--ghost btn--small" id="horaCierreSaveBtn">Guardar</button>
-          </div>
-          <div class="report-menu" id="informeMenu">
-            <button type="button" class="btn btn--ghost" id="informeMenuBtn">📄 Enviar informe</button>
-            <div class="report-menu__dropdown report-menu__dropdown--form" id="informeMenuDropdown">
-              <label for="informeResponsable" class="report-menu__label">Responsable asignado</label>
-              <select id="informeResponsable">
-                ${usuarios.map(u => `<option value="${esc(u.id)}">${esc(u.nombre)}</option>`).join("")}
-              </select>
-              ${usuarios.length ? "" : `<p class="hint" style="margin:6px 0;">Todavía no hay usuarios cargados.</p>`}
-              <button type="button" class="btn btn--primary btn--small" id="informeGenerarBtn" ${usuarios.length ? "" : "disabled"}>Generar informe (PDF)</button>
-            </div>
-          </div>
-          <span class="hint" id="placeHint"></span>
-        </div>
-        <input type="file" id="replaceInput" accept="image/*" style="display:none;">
-        <div class="status" id="replaceStatus"></div>
-        <div class="status" id="horaCierreStatus"></div>
-      </div>
-
       ${hoyPanelHtml}
 
       <div class="plano-layout">
-        <div class="plano-stage-col">
-          <div class="plano-stage" id="stage">
-            <img src="/app/media?id=${esc(proyecto.plano.mediaId)}" alt="Plano de obra" id="planoImg">
-            ${pinsHtml}
+        <div class="console">
+          <div class="console__top">
+            <p class="eyebrow">Mando de RadarObra360 · ${esc(proyecto.nombre)}</p>
+            <h1>Mando de RadarObra360</h1>
+            <p class="lead">Click en un pin para ver sus fotos y video sin salir del plano. Los frentes en estatus "Listo" se quitan de esta vista automáticamente.</p>
+            <div class="console__leds">
+              <div class="console-led"><span class="console-led__label">Puntos</span><span class="console-led__value">${placed.length}</span></div>
+              <div class="console-led"><span class="console-led__label">Sin ubicar</span><span class="console-led__value">${unplaced.length}</span></div>
+              <div class="console-led"><span class="console-led__label">Alertas</span><span class="console-led__value">${hoy.alertas.length}</span></div>
+              <div class="console-led"><span class="console-led__label">Cierre</span><span class="console-led__value" id="ledCierre">${esc(horaCierre)}</span></div>
+            </div>
           </div>
-          ${unplacedListHtml}
+
+          <div class="console__body">
+            <div class="console__rail console__rail--left">
+              <button type="button" class="console-btn console-btn--go" id="placeBtn" title="Colocar punto"><span class="console-btn__icon">📍</span><span class="console-btn__label">Colocar</span></button>
+              <button type="button" class="console-btn" id="moveBtn" title="Mover punto"><span class="console-btn__icon">↔️</span><span class="console-btn__label">Mover</span></button>
+              <button type="button" class="console-btn console-btn--stop" id="deleteBtn" title="Eliminar punto"><span class="console-btn__icon">🗑️</span><span class="console-btn__label">Quitar</span></button>
+            </div>
+
+            <div class="plano-stage-col">
+              <div class="plano-stage" id="stage">
+                <img src="/app/media?id=${esc(proyecto.plano.mediaId)}" alt="Plano de obra" id="planoImg">
+                ${pinsHtml}
+              </div>
+              <span class="hint" id="placeHint"></span>
+              ${unplacedListHtml}
+            </div>
+
+            <div class="console__rail console__rail--right">
+              <button type="button" class="console-btn" id="replaceBtn" title="Reemplazar plano"><span class="console-btn__icon">🔄</span><span class="console-btn__label">Cambiar</span></button>
+              <button type="button" class="console-btn audio-toggle" title="Sonido"><span class="console-btn__icon">🔊</span><span class="console-btn__label">Sonido</span></button>
+              <button type="button" class="console-btn" id="planoToggleBtn" title="Ocultar/mostrar plano"><span class="console-btn__icon">🗺️</span><span class="console-btn__label">Plano</span></button>
+              <button type="button" class="console-btn" id="signalToggleBtn" title="Señal"><span class="console-btn__icon">🛰️</span><span class="console-btn__label">Señal</span></button>
+              <button type="button" class="console-btn" id="radarModeBtn" title="Modo radar"><span class="console-btn__icon">📡</span><span class="console-btn__label">Radar</span></button>
+            </div>
+          </div>
+
+          <div class="console__bottom">
+            <div class="console-spinner">
+              <label>Cierre de jornada</label>
+              <div class="console-spinner__control">
+                <button type="button" id="horaCierreDown" aria-label="Restar 30 minutos">▼</button>
+                <span class="console-spinner__value" id="horaCierreDisplay">${esc(horaCierre)}</span>
+                <button type="button" id="horaCierreUp" aria-label="Sumar 30 minutos">▲</button>
+              </div>
+              <button type="button" class="console-quickstart" id="horaCierreSaveBtn">Guardar</button>
+            </div>
+
+            <div class="report-menu" id="informeMenu">
+              <button type="button" class="console-quickstart" id="informeMenuBtn">📄 Enviar informe</button>
+              <div class="report-menu__dropdown report-menu__dropdown--form" id="informeMenuDropdown">
+                <label for="informeResponsable" class="report-menu__label">Responsable asignado</label>
+                <select id="informeResponsable">
+                  ${usuarios.map(u => `<option value="${esc(u.id)}">${esc(u.nombre)}</option>`).join("")}
+                </select>
+                ${usuarios.length ? "" : `<p class="hint" style="margin:6px 0;">Todavía no hay usuarios cargados.</p>`}
+                <button type="button" class="btn btn--primary btn--small" id="informeGenerarBtn" ${usuarios.length ? "" : "disabled"}>Generar informe (PDF)</button>
+              </div>
+            </div>
+          </div>
+
+          <input type="file" id="replaceInput" accept="image/*" style="display:none;">
+          <div class="status" id="replaceStatus"></div>
+          <div class="status" id="horaCierreStatus"></div>
         </div>
 
         <div class="plano-detail" id="detailPanel">
@@ -349,9 +371,12 @@ exports.handler = async (event) => {
       const planoToggleBtn = document.getElementById('planoToggleBtn');
       const signalToggleBtn = document.getElementById('signalToggleBtn');
       const radarModeBtn = document.getElementById('radarModeBtn');
-      const horaCierreInput = document.getElementById('horaCierreInput');
+      const horaCierreDisplay = document.getElementById('horaCierreDisplay');
+      const horaCierreDown = document.getElementById('horaCierreDown');
+      const horaCierreUp = document.getElementById('horaCierreUp');
       const horaCierreSaveBtn = document.getElementById('horaCierreSaveBtn');
       const horaCierreStatus = document.getElementById('horaCierreStatus');
+      const ledCierre = document.getElementById('ledCierre');
       const informeMenuBtn = document.getElementById('informeMenuBtn');
       const informeMenuDropdown = document.getElementById('informeMenuDropdown');
       const informeResponsable = document.getElementById('informeResponsable');
@@ -491,17 +516,17 @@ exports.handler = async (event) => {
 
       function updateSignalToggleUI() {
         const off = signalDisabled();
-        signalToggleBtn.textContent = off ? '🛰️ Señal: OFF' : '🛰️ Señal: ON';
+        signalToggleBtn.classList.toggle('is-off', off);
         stage.classList.toggle('signal-off', off);
       }
       function updatePlanoToggleUI() {
         const oculto = planoOculto();
-        planoToggleBtn.textContent = oculto ? '🗺️ Mostrar plano' : '🗺️ Ocultar plano';
+        planoToggleBtn.classList.toggle('is-off', oculto);
         stage.classList.toggle('plano-oculto', oculto);
       }
       function updateRadarModeUI() {
         const on = planoOculto() && !signalDisabled();
-        radarModeBtn.textContent = on ? '📡 Modo radar: ON' : '📡 Modo radar: OFF';
+        radarModeBtn.classList.toggle('is-active', on);
       }
       function refreshToggles() {
         updateSignalToggleUI();
@@ -552,9 +577,24 @@ exports.handler = async (event) => {
       updateSignals();
       setInterval(updateSignals, 60000);
 
+      // Spinner tipo "Time/Incline/Speed" de consola de gimnasio: sube/baja
+      // de 30 en 30 min en vez de un <input type="time"> nativo.
+      let horaCierreValor = HORA_CIERRE;
+      function pintarHoraCierre() {
+        horaCierreDisplay.textContent = horaCierreValor;
+      }
+      function ajustarHoraCierre(pasoMin) {
+        const [h, m] = horaCierreValor.split(':').map(Number);
+        let total = (h * 60 + m + pasoMin + 24 * 60) % (24 * 60);
+        const nh = String(Math.floor(total / 60)).padStart(2, '0');
+        const nm = String(total % 60).padStart(2, '0');
+        horaCierreValor = nh + ':' + nm;
+        pintarHoraCierre();
+      }
+      horaCierreUp.addEventListener('click', () => ajustarHoraCierre(30));
+      horaCierreDown.addEventListener('click', () => ajustarHoraCierre(-30));
+
       horaCierreSaveBtn.addEventListener('click', async () => {
-        const valor = horaCierreInput.value;
-        if (!valor) return;
         horaCierreSaveBtn.disabled = true;
         horaCierreStatus.className = 'status';
         horaCierreStatus.textContent = 'Guardando...';
@@ -562,11 +602,12 @@ exports.handler = async (event) => {
           const res = await fetch('/app/proyecto-horacierre', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ proyectoId: PROYECTO_ID, horaCierre: valor })
+            body: JSON.stringify({ proyectoId: PROYECTO_ID, horaCierre: horaCierreValor })
           });
           const body = await res.json().catch(() => ({}));
           if (!res.ok) throw new Error((body.error || 'Error del servidor') + (body.debug ? ' — ' + body.debug : ''));
           HORA_CIERRE = body.horaCierre;
+          if (ledCierre) ledCierre.textContent = HORA_CIERRE;
           updateSignals();
           horaCierreStatus.className = 'status status--ok';
           horaCierreStatus.textContent = 'Hora de cierre guardada.';
@@ -858,6 +899,7 @@ exports.handler = async (event) => {
         moving = false;
         movingPuntoId = null;
         stage.classList.remove('moving');
+        moveBtn.classList.remove('is-active');
         document.querySelectorAll('.pin').forEach(p => p.classList.remove('pin--moving'));
       }
 
@@ -866,11 +908,13 @@ exports.handler = async (event) => {
         placingExistingId = null;
         placingExistingNombre = null;
         stage.classList.remove('placing');
+        placeBtn.classList.remove('is-active');
       }
 
       function exitRemoveMode() {
         removing = false;
         stage.classList.remove('removing');
+        deleteBtn.classList.remove('is-active');
       }
 
       function generarNombreAuto() {
@@ -919,6 +963,7 @@ exports.handler = async (event) => {
         exitRemoveMode();
         placing = !placing;
         stage.classList.toggle('placing', placing);
+        placeBtn.classList.toggle('is-active', placing);
         placeHint.textContent = placing ? 'Ahora haz click sobre el plano.' : '';
       });
 
@@ -1023,6 +1068,7 @@ exports.handler = async (event) => {
         moving = !moving;
         movingPuntoId = null;
         stage.classList.toggle('moving', moving);
+        moveBtn.classList.toggle('is-active', moving);
         document.querySelectorAll('.pin').forEach(p => p.classList.remove('pin--moving'));
         placeHint.textContent = moving ? 'Modo mover: haz click en el punto que quieres reubicar.' : '';
       });
@@ -1032,6 +1078,7 @@ exports.handler = async (event) => {
         exitMoveMode();
         removing = !removing;
         stage.classList.toggle('removing', removing);
+        deleteBtn.classList.toggle('is-active', removing);
         placeHint.textContent = removing ? 'Modo eliminar: haz click en el pin que quieres quitar del mapa.' : '';
       });
 

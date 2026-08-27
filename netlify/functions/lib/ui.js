@@ -108,8 +108,8 @@ p.lead{color:var(--muted);margin-bottom:28px;border-left:3px solid var(--border)
 .registro__head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;flex-wrap:wrap;gap:8px;}
 .registro__fecha{font-weight:800;color:var(--navy);}
 .registro__nota{color:var(--muted);font-size:0.92rem;margin-bottom:14px;}
-.registro__media{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;}
-.media-item{position:relative;}
+.registro__media{display:flex;overflow-x:auto;gap:10px;padding-bottom:4px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;}
+.media-item{position:relative;flex:0 0 140px;scroll-snap-align:start;}
 .media-item img,.media-item video{width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;background:#000;display:block;}
 .media-item video{aspect-ratio:16/9;object-fit:contain;}
 .media-item img{cursor:zoom-in;}
@@ -315,7 +315,7 @@ textarea{resize:vertical;}
 .report-menu__dropdown--form select{margin-bottom:10px;}
 .report-menu__dropdown--form .btn{width:100%;}
 .plano-detail .registro{padding:14px;margin-bottom:12px;}
-.plano-detail .registro__media{grid-template-columns:repeat(auto-fill,minmax(100px,1fr));}
+.plano-detail .registro__media .media-item{flex-basis:100px;}
 .week-bars{display:flex;gap:8px;overflow-x:auto;padding-bottom:8px;margin-bottom:16px;}
 .week-bar{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:3px;background:var(--navy-deep);color:rgba(255,255,255,0.75);border:none;border-radius:8px;padding:10px 14px;cursor:pointer;font-family:inherit;min-width:60px;transition:transform .1s ease;}
 .week-bar:hover{transform:translateY(-2px);}
@@ -340,6 +340,7 @@ textarea{resize:vertical;}
   .plano-detail__titlebar h2{color:var(--navy);}
   .plano-detail__responsable{color:var(--navy);background:var(--cream);}
   .registro{break-inside:avoid;border:1px solid #ccc;box-shadow:none;}
+  .registro__media{overflow-x:visible;flex-wrap:wrap;}
   .registro__media img,.registro__media video{break-inside:avoid;}
 
   .informe-page .eyebrow{margin-bottom:6px;}

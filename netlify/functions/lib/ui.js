@@ -45,7 +45,7 @@ a{color:inherit;}
 .linklike{background:none;border:none;color:var(--cyan);font-weight:600;cursor:pointer;font-size:inherit;font-family:inherit;padding:0;}
 .wrap{max-width:1100px;margin:0 auto;padding:6vh 5vw;}
 .wrap--narrow{max-width:560px;}
-.wrap--wide{max-width:1560px;}
+.wrap--wide{max-width:none;}
 .eyebrow{font-family:var(--font-hud);display:inline-block;font-size:0.7rem;letter-spacing:0.03em;color:var(--cyan);font-weight:700;margin-bottom:10px;border:2px solid var(--cyan);border-radius:6px;padding:4px 10px;}
 h1{font-family:var(--font-hud);font-size:clamp(1.4rem,3vw,2rem);font-weight:700;color:var(--navy);margin-bottom:8px;display:inline-block;border-bottom:4px solid var(--cyan);padding-bottom:8px;}
 p.lead{color:var(--muted);margin-bottom:28px;border-left:3px solid var(--border);padding-left:14px;}
@@ -267,9 +267,10 @@ textarea{resize:vertical;}
 
 .plano-layout{display:grid;grid-template-columns:2.1fr 1fr;gap:24px;align-items:start;}
 .plano-stage-col{min-width:0;}
+.plano-side-col{position:sticky;top:90px;max-height:calc(100vh - 110px);overflow-y:auto;}
 .pin--active .pin__dot{box-shadow:0 0 0 4px rgba(15,155,142,0.55),0 2px 6px rgba(0,0,0,0.4),0 0 14px rgba(15,155,142,0.8);}
 .pin--active .pin__label{background:var(--cyan);color:#04141f;}
-.plano-detail{background:#fff;border:2px solid var(--border);border-radius:16px;padding:0;position:sticky;top:90px;max-height:calc(100vh - 110px);overflow-y:auto;box-shadow:0 4px 0 rgba(0,0,0,0.1);}
+.plano-detail{background:#fff;border:2px solid var(--border);border-radius:16px;padding:0;margin-top:20px;position:sticky;top:90px;max-height:calc(100vh - 110px);overflow-y:auto;box-shadow:0 4px 0 rgba(0,0,0,0.1);}
 .card::before,.card::after,.registro::before,.registro::after,.plano-detail::before,.plano-detail::after{
   content:'';position:absolute;width:30px;height:30px;pointer-events:none;
   filter:drop-shadow(0 0 6px rgba(15,155,142,0.7));
@@ -313,7 +314,7 @@ textarea{resize:vertical;}
 
 @media print{
   body,body.radar-bg{background:#fff;}
-  .topbar,.console__leds,.console__rail,.console__bottom,.page-actions,.lightbox,.plano-stage-col,#replaceInput,.plano-detail__actions,.tag-add,.week-bars,.media-item__delete,.media-item__share,.registro__notify,.registro__edit,.registro__edit-toggle,.informe-actions,.hoy-panel{display:none !important;}
+  .topbar,.console__leds,.console__rail,.console__bottom,.page-actions,.lightbox,#stage,#placeHint,.plano-side-col,#replaceInput,.plano-detail__actions,.tag-add,.week-bars,.media-item__delete,.media-item__share,.registro__notify,.registro__edit,.registro__edit-toggle,.informe-actions,.hoy-panel{display:none !important;}
   .console{background:none;border:none;box-shadow:none;padding:0;}
   .console__top h1,.console__top .eyebrow{color:var(--navy);border-bottom-color:var(--border);}
   .console__top p.lead{color:var(--muted);}

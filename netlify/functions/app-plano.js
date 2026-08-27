@@ -283,7 +283,31 @@ exports.handler = async (event) => {
                 ${pinsHtml}
               </div>
               <span class="hint" id="placeHint"></span>
-              ${unplacedListHtml}
+
+              <div class="plano-detail" id="detailPanel">
+                <div class="plano-detail__empty" id="detailEmpty">👈 Selecciona un punto en el plano para ver sus fotos y video aquí.</div>
+                <div class="plano-detail__content" id="detailContent" style="display:none;">
+                  <div class="plano-detail__titlebar">
+                    <h2 id="detailName"></h2>
+                    <span class="plano-detail__responsable" id="detailResponsable"></span>
+                  </div>
+                  <div class="plano-detail__body">
+                    <div class="plano-detail__actions">
+                      <div class="report-menu" id="reportMenu">
+                        <button type="button" class="btn btn--ghost btn--small" id="reportMenuBtn" style="color:var(--navy); border-color:var(--border);">📄 Crear informe</button>
+                        <div class="report-menu__dropdown" id="reportMenuDropdown">
+                          <button type="button" class="report-menu__item" id="exportBtn">🖨️ Exportar</button>
+                          <button type="button" class="report-menu__item" id="shareBtn">📤 Compartir</button>
+                        </div>
+                      </div>
+                      <a id="detailAddLink" class="btn btn--primary btn--small" href="#">＋ Agregar aquí</a>
+                    </div>
+                    <div class="plano-detail__tags" id="detailTags"></div>
+
+                    <div id="detailRegistros"></div>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div class="console__rail console__rail--right">
@@ -333,29 +357,8 @@ exports.handler = async (event) => {
           <div class="status" id="horaCierreStatus"></div>
         </div>
 
-        <div class="plano-detail" id="detailPanel">
-          <div class="plano-detail__empty" id="detailEmpty">👈 Selecciona un punto en el plano para ver sus fotos y video aquí.</div>
-          <div class="plano-detail__content" id="detailContent" style="display:none;">
-            <div class="plano-detail__titlebar">
-              <h2 id="detailName"></h2>
-              <span class="plano-detail__responsable" id="detailResponsable"></span>
-            </div>
-            <div class="plano-detail__body">
-              <div class="plano-detail__actions">
-                <div class="report-menu" id="reportMenu">
-                  <button type="button" class="btn btn--ghost btn--small" id="reportMenuBtn" style="color:var(--navy); border-color:var(--border);">📄 Crear informe</button>
-                  <div class="report-menu__dropdown" id="reportMenuDropdown">
-                    <button type="button" class="report-menu__item" id="exportBtn">🖨️ Exportar</button>
-                    <button type="button" class="report-menu__item" id="shareBtn">📤 Compartir</button>
-                  </div>
-                </div>
-                <a id="detailAddLink" class="btn btn--primary btn--small" href="#">＋ Agregar aquí</a>
-              </div>
-              <div class="plano-detail__tags" id="detailTags"></div>
-
-              <div id="detailRegistros"></div>
-            </div>
-          </div>
+        <div class="plano-side-col">
+          ${unplacedListHtml}
         </div>
       </div>
     </div>

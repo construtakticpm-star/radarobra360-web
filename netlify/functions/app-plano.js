@@ -179,7 +179,10 @@ exports.handler = async (event) => {
   // integra con el panel "Hoy" (ver eventosPanelHtml) en vez de vivir en
   // su propia tarjeta aparte.
   const unplacedListHtml = `
-    <p class="eyebrow">Próximos eventos</p>
+    <div class="unplaced-header">
+      <p class="eyebrow">Eventos próximos sin radar</p>
+      <button type="submit" form="quickUploadForm" class="btn btn--primary btn--small" id="quickUploadBtn">Subir sin ubicar</button>
+    </div>
     <p class="hint" style="margin-bottom:14px;">Archivos cargados en espera de ubicarse en el plano.</p>
 
     <div class="unplaced-gallery" id="unplacedList">
@@ -199,7 +202,6 @@ exports.handler = async (event) => {
         <label for="quickVideo">Video</label>
         <input type="file" id="quickVideo" accept="video/*">
       </div>
-      <button type="submit" class="btn btn--primary btn--small" id="quickUploadBtn">Subir sin ubicar</button>
     </form>
     <div class="status" id="quickUploadStatus"></div>`;
 
@@ -251,7 +253,7 @@ exports.handler = async (event) => {
         <div class="hoy-chat">${hoyChatHtml}</div>
       </div>
       <div class="eventos-panel__divider"></div>
-      <div class="eventos-panel__col">
+      <div class="eventos-panel__col eventos-panel__col--gallery">
         ${unplacedListHtml}
       </div>
     </div>`;

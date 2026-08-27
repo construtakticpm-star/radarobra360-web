@@ -72,10 +72,13 @@ p.lead{color:var(--muted);margin-bottom:28px;border-left:3px solid var(--border)
    del radar para que el plano quede libre de usar todo el ancho ---------- */
 .eventos-panel{margin-bottom:24px;display:flex;gap:26px;align-items:flex-start;}
 .eventos-panel__col{flex:1 1 0;min-width:0;}
+.eventos-panel__col--gallery{flex:1.4 1 0;}
 .eventos-panel__col .eyebrow{margin-bottom:8px;}
 .eventos-panel__divider{width:1px;align-self:stretch;background:var(--border);}
 .eventos-panel .alert-banner-list{margin:0 0 8px;}
 .eventos-panel .alert-banner{padding:7px 11px;font-size:0.74rem;}
+.unplaced-header{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px;}
+.unplaced-header .eyebrow{margin-bottom:0;}
 @media (max-width:860px){.eventos-panel{flex-direction:column;}.eventos-panel__divider{width:100%;height:1px;}}
 
 .hoy-chat{display:flex;flex-direction:column;gap:5px;max-height:220px;overflow-y:auto;}
@@ -148,8 +151,9 @@ input,select,textarea{width:100%;border:1px solid var(--border);border-radius:8p
 .quick-upload-form{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:end;border-top:1px solid var(--border);padding-top:14px;}
 .quick-upload-form__field{flex:1 1 130px;min-width:120px;}
 .quick-upload-form__field label{margin:0 0 3px;font-size:0.68rem;border-bottom:none;padding-bottom:0;}
-.quick-upload-form__field input{padding:6px 9px;font-size:0.78rem;}
+.quick-upload-form__field input{padding:5px 8px;font-size:0.72rem;}
 .quick-upload-form .btn{flex:0 0 auto;}
+.unplaced-header .btn,.unplaced-card__place{padding:6px 11px;font-size:0.7rem;}
 textarea{resize:vertical;}
 .hint{font-size:0.76rem;color:var(--muted);margin-top:4px;}
 .card{position:relative;background:#fff;border:2px solid var(--border);border-radius:14px;padding:24px;box-shadow:0 6px 0 rgba(0,0,0,0.1);}

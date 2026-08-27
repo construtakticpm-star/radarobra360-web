@@ -175,34 +175,33 @@ exports.handler = async (event) => {
 
   // Sección "sin ubicar todavía": siempre visible, funciona como bandeja de
   // futuros eventos — subir fotos/video aquí crea (o alimenta) un punto que
-  // NO aparece en el radar hasta que alguien lo ubique manualmente. Galería
-  // y formulario de carga rápida viven dentro de un solo panel.
+  // NO aparece en el radar hasta que alguien lo ubique manualmente. Se
+  // integra con el panel "Hoy" (ver eventosPanelHtml) en vez de vivir en
+  // su propia tarjeta aparte.
   const unplacedListHtml = `
-    <div class="card unplaced-panel">
-      <p class="eyebrow">Sin ubicar todavía</p>
-      <p class="hint" style="margin-bottom:14px;">Archivos cargados en espera de ubicarse en el plano — una visual de próximos eventos.</p>
+    <p class="eyebrow">Próximos eventos</p>
+    <p class="hint" style="margin-bottom:14px;">Archivos cargados en espera de ubicarse en el plano.</p>
 
-      <div class="unplaced-gallery" id="unplacedList">
-        ${unplacedItemsHtml}
+    <div class="unplaced-gallery" id="unplacedList">
+      ${unplacedItemsHtml}
+    </div>
+
+    <form id="quickUploadForm" class="quick-upload-form">
+      <div class="quick-upload-form__field">
+        <label for="quickNombre">Nombre</label>
+        <input type="text" id="quickNombre" placeholder="Opcional">
       </div>
-
-      <form id="quickUploadForm" class="quick-upload-form">
-        <div class="quick-upload-form__field">
-          <label for="quickNombre">Nombre</label>
-          <input type="text" id="quickNombre" placeholder="Opcional">
-        </div>
-        <div class="quick-upload-form__field">
-          <label for="quickFotos">Fotos</label>
-          <input type="file" id="quickFotos" accept="image/*" multiple>
-        </div>
-        <div class="quick-upload-form__field">
-          <label for="quickVideo">Video</label>
-          <input type="file" id="quickVideo" accept="video/*">
-        </div>
-        <button type="submit" class="btn btn--primary btn--small" id="quickUploadBtn">Subir sin ubicar</button>
-      </form>
-      <div class="status" id="quickUploadStatus"></div>
-    </div>`;
+      <div class="quick-upload-form__field">
+        <label for="quickFotos">Fotos</label>
+        <input type="file" id="quickFotos" accept="image/*" multiple>
+      </div>
+      <div class="quick-upload-form__field">
+        <label for="quickVideo">Video</label>
+        <input type="file" id="quickVideo" accept="video/*">
+      </div>
+      <button type="submit" class="btn btn--primary btn--small" id="quickUploadBtn">Subir sin ubicar</button>
+    </form>
+    <div class="status" id="quickUploadStatus"></div>`;
 
   // Full punto data (incl. registros/fotos/video ids) embedded so clicking a
   // pin renders instantly, no extra round trip to fetch each punto.
@@ -241,17 +240,26 @@ exports.handler = async (event) => {
         return `<div class="hoy-chat__msg"><span class="hoy-chat__icon">${icon}</span><div class="hoy-chat__bubble">${texto}<span class="hoy-chat__time">${esc(e.hora)}</span></div></div>`;
       }).join("")
     : `<p class="hint" style="padding:4px 2px;">Sin movimientos todavía hoy.</p>`;
-  const hoyPanelHtml = `
-    <div class="card hoy-panel hoy-panel--chat">
-      <p class="eyebrow">Hoy · ${esc(hoy.hoy)}</p>
-      ${hoyAlertasHtml}
-      <div class="hoy-chat">${hoyChatHtml}</div>
+  // Panel único: "Hoy" (feed de asignaciones/completados + alertas) y
+  // "Próximos eventos" (sin ubicar todavía) integrados en una sola tarjeta
+  // arriba del radar, para que el plano quede libre de usar todo el ancho.
+  const eventosPanelHtml = `
+    <div class="card eventos-panel">
+      <div class="eventos-panel__col">
+        <p class="eyebrow">Hoy · ${esc(hoy.hoy)}</p>
+        ${hoyAlertasHtml}
+        <div class="hoy-chat">${hoyChatHtml}</div>
+      </div>
+      <div class="eventos-panel__divider"></div>
+      <div class="eventos-panel__col">
+        ${unplacedListHtml}
+      </div>
     </div>`;
 
   const body = `
     ${topbar(proyectoId, proyecto.nombre)}
     <div class="wrap wrap--wide">
-      ${hoyPanelHtml}
+      ${eventosPanelHtml}
 
       <div class="plano-layout">
         <div class="console">
@@ -355,10 +363,6 @@ exports.handler = async (event) => {
           <input type="file" id="replaceInput" accept="image/*" style="display:none;">
           <div class="status" id="replaceStatus"></div>
           <div class="status" id="horaCierreStatus"></div>
-        </div>
-
-        <div class="plano-side-col">
-          ${unplacedListHtml}
         </div>
       </div>
     </div>

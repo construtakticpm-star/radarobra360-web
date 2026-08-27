@@ -68,17 +68,21 @@ p.lead{color:var(--muted);margin-bottom:28px;border-left:3px solid var(--border)
 .alert-banner-list{display:flex;flex-direction:column;gap:8px;}
 .alert-banner{background:#fdeceb;border:1px solid #e8a89e;color:#a13a2e;border-radius:10px;padding:10px 14px;font-size:0.85rem;}
 .alert-banner__meta{color:#8a6b0f;font-weight:600;}
-.hoy-panel{margin-bottom:24px;}
-.hoy-panel--chat{max-width:40%;padding:14px 16px;}
-.hoy-panel--chat .eyebrow{margin-bottom:8px;}
-.hoy-panel .alert-banner-list{margin:0 0 8px;}
-.hoy-panel .alert-banner{padding:7px 11px;font-size:0.74rem;}
+/* ---------- panel único "Hoy" + "Próximos eventos" (sin ubicar), arriba
+   del radar para que el plano quede libre de usar todo el ancho ---------- */
+.eventos-panel{margin-bottom:24px;display:flex;gap:26px;align-items:flex-start;}
+.eventos-panel__col{flex:1 1 0;min-width:0;}
+.eventos-panel__col .eyebrow{margin-bottom:8px;}
+.eventos-panel__divider{width:1px;align-self:stretch;background:var(--border);}
+.eventos-panel .alert-banner-list{margin:0 0 8px;}
+.eventos-panel .alert-banner{padding:7px 11px;font-size:0.74rem;}
+@media (max-width:860px){.eventos-panel{flex-direction:column;}.eventos-panel__divider{width:100%;height:1px;}}
+
 .hoy-chat{display:flex;flex-direction:column;gap:5px;max-height:220px;overflow-y:auto;}
 .hoy-chat__msg{display:flex;gap:6px;align-items:flex-start;}
 .hoy-chat__icon{flex-shrink:0;width:20px;height:20px;border-radius:50%;background:var(--cream);display:flex;align-items:center;justify-content:center;font-size:0.68rem;}
 .hoy-chat__bubble{background:var(--cream);border-radius:10px 10px 10px 2px;padding:5px 10px;font-size:0.74rem;color:var(--ink);line-height:1.35;max-width:calc(100% - 30px);}
 .hoy-chat__time{display:block;font-size:0.6rem;color:var(--muted);margin-top:2px;}
-@media (max-width:860px){.hoy-panel--chat{max-width:none;}}
 
 .informe-actions{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap;}
 .informe-actions .back{margin-bottom:0;}
@@ -265,9 +269,8 @@ textarea{resize:vertical;}
 .unplaced-card__name{display:block;margin-top:6px;font-weight:700;color:var(--navy);font-size:0.82rem;}
 .unplaced-card__place{width:100%;}
 
-.plano-layout{display:grid;grid-template-columns:2.1fr 1fr;gap:24px;align-items:start;}
+.plano-layout{display:block;}
 .plano-stage-col{min-width:0;}
-.plano-side-col{position:sticky;top:90px;max-height:calc(100vh - 110px);overflow-y:auto;}
 .pin--active .pin__dot{box-shadow:0 0 0 4px rgba(15,155,142,0.55),0 2px 6px rgba(0,0,0,0.4),0 0 14px rgba(15,155,142,0.8);}
 .pin--active .pin__label{background:var(--cyan);color:#04141f;}
 .plano-detail{background:#fff;border:2px solid var(--border);border-radius:16px;padding:0;margin-top:20px;position:sticky;top:90px;max-height:calc(100vh - 110px);overflow-y:auto;box-shadow:0 4px 0 rgba(0,0,0,0.1);}
@@ -308,13 +311,12 @@ textarea{resize:vertical;}
 .week-bar--active{background:linear-gradient(160deg,var(--cyan),#0a5a52);color:#fff;}
 .week-bar--active .week-bar__count{color:rgba(255,255,255,0.75);}
 @media (max-width:860px){
-  .plano-layout{grid-template-columns:1fr;}
   .plano-detail{position:static;max-height:none;}
 }
 
 @media print{
   body,body.radar-bg{background:#fff;}
-  .topbar,.console__leds,.console__rail,.console__bottom,.page-actions,.lightbox,#stage,#placeHint,.plano-side-col,#replaceInput,.plano-detail__actions,.tag-add,.week-bars,.media-item__delete,.media-item__share,.registro__notify,.registro__edit,.registro__edit-toggle,.informe-actions,.hoy-panel{display:none !important;}
+  .topbar,.console__leds,.console__rail,.console__bottom,.page-actions,.lightbox,#stage,#placeHint,#replaceInput,.plano-detail__actions,.tag-add,.week-bars,.media-item__delete,.media-item__share,.registro__notify,.registro__edit,.registro__edit-toggle,.informe-actions,.eventos-panel{display:none !important;}
   .console{background:none;border:none;box-shadow:none;padding:0;}
   .console__top h1,.console__top .eyebrow{color:var(--navy);border-bottom-color:var(--border);}
   .console__top p.lead{color:var(--muted);}

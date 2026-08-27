@@ -45,7 +45,7 @@ a{color:inherit;}
 .linklike{background:none;border:none;color:var(--cyan);font-weight:600;cursor:pointer;font-size:inherit;font-family:inherit;padding:0;}
 .wrap{max-width:1100px;margin:0 auto;padding:6vh 5vw;}
 .wrap--narrow{max-width:560px;}
-.wrap--wide{max-width:1300px;}
+.wrap--wide{max-width:1560px;}
 .eyebrow{font-family:var(--font-hud);display:inline-block;font-size:0.7rem;letter-spacing:0.03em;color:var(--cyan);font-weight:700;margin-bottom:10px;border:2px solid var(--cyan);border-radius:6px;padding:4px 10px;}
 h1{font-family:var(--font-hud);font-size:clamp(1.4rem,3vw,2rem);font-weight:700;color:var(--navy);margin-bottom:8px;display:inline-block;border-bottom:4px solid var(--cyan);padding-bottom:8px;}
 p.lead{color:var(--muted);margin-bottom:28px;border-left:3px solid var(--border);padding-left:14px;}
@@ -173,12 +173,19 @@ textarea{resize:vertical;}
 .console-led__label{display:block;font-size:0.56rem;letter-spacing:0.05em;color:rgba(255,166,64,0.55);text-transform:uppercase;margin-bottom:3px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .console-led__value{display:block;font-family:"Consolas","Courier New",monospace;font-size:1.1rem;font-weight:700;color:#ffb238;text-shadow:0 0 8px rgba(255,166,56,0.75),0 0 2px rgba(255,166,56,0.9);}
 
-.console__body{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:16px;align-items:start;margin-top:18px;}
+.console__body{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:14px;align-items:start;margin-top:18px;}
 .console__rail{display:flex;flex-direction:column;gap:10px;}
+
+.console-group{
+  display:flex;flex-direction:column;align-items:center;gap:8px;
+  border:1px solid rgba(255,255,255,0.16);border-radius:12px;
+  padding:10px 8px 8px;background:rgba(255,255,255,0.025);
+}
+.console-group__label{font-size:0.56rem;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;color:rgba(255,255,255,0.4);margin:0;}
 
 .console-btn{
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
-  width:72px;height:72px;flex-shrink:0;border-radius:50%;
+  width:62px;height:62px;flex-shrink:0;border-radius:50%;
   background:radial-gradient(circle at 35% 30%,#3a4d63,#1c2b3d);
   border:2px solid rgba(255,255,255,0.18);color:rgba(255,255,255,0.85);
   cursor:pointer;font-family:var(--font);padding:0;
@@ -186,8 +193,8 @@ textarea{resize:vertical;}
   transition:transform .08s ease,box-shadow .08s ease,opacity .15s ease;
 }
 .console-btn:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.1);}
-.console-btn__icon{font-size:1.25rem;line-height:1;}
-.console-btn__label{font-size:0.58rem;font-weight:600;letter-spacing:0.02em;}
+.console-btn__icon{font-size:1.1rem;line-height:1;}
+.console-btn__label{font-size:0.53rem;font-weight:600;letter-spacing:0.02em;}
 .console-btn--go{background:radial-gradient(circle at 35% 30%,#17c2ac,var(--cyan));border-color:#0b6f66;color:#fff;}
 .console-btn--stop{background:radial-gradient(circle at 35% 30%,#e05b4a,var(--danger));border-color:#8f2c20;color:#fff;}
 .console-btn.is-active{outline:3px solid var(--amber);outline-offset:2px;}
@@ -210,6 +217,7 @@ textarea{resize:vertical;}
 @media (max-width:960px){
   .console__body{grid-template-columns:1fr;}
   .console__rail{flex-direction:row;flex-wrap:wrap;justify-content:center;}
+  .console-group{flex-direction:row;}
 }
 
 .plano-stage{position:relative;background:#000;border-radius:14px;overflow:hidden;line-height:0;cursor:crosshair;user-select:none;}
@@ -257,7 +265,7 @@ textarea{resize:vertical;}
 .unplaced-card__name{display:block;margin-top:6px;font-weight:700;color:var(--navy);font-size:0.82rem;}
 .unplaced-card__place{width:100%;}
 
-.plano-layout{display:grid;grid-template-columns:1.5fr 1fr;gap:24px;align-items:start;}
+.plano-layout{display:grid;grid-template-columns:2.1fr 1fr;gap:24px;align-items:start;}
 .plano-stage-col{min-width:0;}
 .pin--active .pin__dot{box-shadow:0 0 0 4px rgba(15,155,142,0.55),0 2px 6px rgba(0,0,0,0.4),0 0 14px rgba(15,155,142,0.8);}
 .pin--active .pin__label{background:var(--cyan);color:#04141f;}

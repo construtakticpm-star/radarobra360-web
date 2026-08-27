@@ -269,9 +269,12 @@ exports.handler = async (event) => {
 
           <div class="console__body">
             <div class="console__rail console__rail--left">
-              <button type="button" class="console-btn console-btn--go" id="placeBtn" title="Colocar punto"><span class="console-btn__icon">📍</span><span class="console-btn__label">Colocar</span></button>
-              <button type="button" class="console-btn" id="moveBtn" title="Mover punto"><span class="console-btn__icon">↔️</span><span class="console-btn__label">Mover</span></button>
-              <button type="button" class="console-btn console-btn--stop" id="deleteBtn" title="Eliminar punto"><span class="console-btn__icon">🗑️</span><span class="console-btn__label">Quitar</span></button>
+              <div class="console-group">
+                <p class="console-group__label">Editar</p>
+                <button type="button" class="console-btn console-btn--go" id="placeBtn" title="Colocar punto"><span class="console-btn__icon">📍</span><span class="console-btn__label">Colocar</span></button>
+                <button type="button" class="console-btn" id="moveBtn" title="Mover punto"><span class="console-btn__icon">↔️</span><span class="console-btn__label">Mover</span></button>
+                <button type="button" class="console-btn console-btn--stop" id="deleteBtn" title="Eliminar punto"><span class="console-btn__icon">🗑️</span><span class="console-btn__label">Quitar</span></button>
+              </div>
             </div>
 
             <div class="plano-stage-col">
@@ -284,11 +287,20 @@ exports.handler = async (event) => {
             </div>
 
             <div class="console__rail console__rail--right">
-              <button type="button" class="console-btn" id="replaceBtn" title="Reemplazar plano"><span class="console-btn__icon">🔄</span><span class="console-btn__label">Cambiar</span></button>
-              <button type="button" class="console-btn audio-toggle" title="Sonido"><span class="console-btn__icon">🔊</span><span class="console-btn__label">Sonido</span></button>
-              <button type="button" class="console-btn" id="planoToggleBtn" title="Ocultar/mostrar plano"><span class="console-btn__icon">🗺️</span><span class="console-btn__label">Plano</span></button>
-              <button type="button" class="console-btn" id="signalToggleBtn" title="Señal"><span class="console-btn__icon">🛰️</span><span class="console-btn__label">Señal</span></button>
-              <button type="button" class="console-btn" id="radarModeBtn" title="Modo radar"><span class="console-btn__icon">📡</span><span class="console-btn__label">Radar</span></button>
+              <div class="console-group">
+                <p class="console-group__label">Plano</p>
+                <button type="button" class="console-btn" id="replaceBtn" title="Reemplazar plano"><span class="console-btn__icon">🔄</span><span class="console-btn__label">Cambiar</span></button>
+                <button type="button" class="console-btn" id="planoToggleBtn" title="Ocultar/mostrar plano"><span class="console-btn__icon">🗺️</span><span class="console-btn__label">Plano</span></button>
+              </div>
+              <div class="console-group">
+                <p class="console-group__label">Radar</p>
+                <button type="button" class="console-btn" id="signalToggleBtn" title="Señal"><span class="console-btn__icon">🛰️</span><span class="console-btn__label">Señal</span></button>
+                <button type="button" class="console-btn" id="radarModeBtn" title="Modo radar"><span class="console-btn__icon">📡</span><span class="console-btn__label">Radar</span></button>
+              </div>
+              <div class="console-group">
+                <p class="console-group__label">Audio</p>
+                <button type="button" class="console-btn audio-toggle" title="Sonido"><span class="console-btn__icon">🔊</span><span class="console-btn__label">Sonido</span></button>
+              </div>
             </div>
           </div>
 

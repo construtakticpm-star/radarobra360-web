@@ -284,7 +284,7 @@ exports.handler = async (event) => {
                 </div>
 
                 <div class="report-menu" id="informeMenu">
-                  <button type="button" class="console-quickstart" id="informeMenuBtn">📄 Emitir Reporte</button>
+                  <button type="button" class="console-quickstart" id="informeMenuBtn">📶 Emitir Señal</button>
                   <div class="report-menu__dropdown report-menu__dropdown--form" id="informeMenuDropdown">
                     <label for="informeResponsable" class="report-menu__label">Responsable asignado</label>
                     <select id="informeResponsable">

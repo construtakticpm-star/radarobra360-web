@@ -1,8 +1,8 @@
 const { checkAuth } = require("./lib/auth");
-const { getData, saveData, findProyecto, slugify } = require("./lib/store");
+const { saveData, findProyectoForEmpresa, slugify } = require("./lib/store");
 
 exports.handler = async (event) => {
-  const auth = checkAuth(event);
+  const auth = await checkAuth(event);
   if (!auth.ok) return auth.response;
 
   if (event.httpMethod !== "POST") {
@@ -24,8 +24,8 @@ exports.handler = async (event) => {
   let punto;
 
   try {
-    const data = await getData();
-    const proyecto = findProyecto(data, proyectoId);
+    const data = auth.data;
+    const proyecto = findProyectoForEmpresa(data, proyectoId, auth.empresaId);
     if (!proyecto) {
       return { statusCode: 404, headers: { "Content-Type": "application/json" }, body: JSON.stringify({ error: "Proyecto no encontrado" }) };
     }

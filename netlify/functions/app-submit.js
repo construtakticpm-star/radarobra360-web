@@ -1,13 +1,13 @@
 const crypto = require("crypto");
 const { checkAuth } = require("./lib/auth");
-const { getData, saveData, saveMedia, findProyecto, findUsuario, slugify } = require("./lib/store");
+const { saveData, saveMedia, findProyectoForEmpresa, findUsuarioForEmpresa, slugify } = require("./lib/store");
 const { addEvento } = require("./lib/eventos");
 
 const MAX_TOTAL_BYTES = 4.7 * 1024 * 1024; // ~3.5MB raw inflates ~33% as base64
 const ESTATUS_VALIDOS = ["pendiente", "en-proceso", "listo"];
 
 exports.handler = async (event) => {
-  const auth = checkAuth(event, "RadarObra360 — registrar");
+  const auth = await checkAuth(event);
   if (!auth.ok) return auth.response;
 
   if (event.httpMethod !== "POST") {
@@ -43,20 +43,20 @@ exports.handler = async (event) => {
   };
 
   try {
-    const data = await getData();
-    const proyecto = findProyecto(data, proyectoId);
+    const data = auth.data;
+    const proyecto = findProyectoForEmpresa(data, proyectoId, auth.empresaId);
     if (!proyecto) {
       return { statusCode: 404, headers: { "Content-Type": "application/json" }, body: JSON.stringify({ error: "Proyecto no encontrado" }) };
     }
 
     for (const foto of fotos || []) {
       const id = crypto.randomUUID();
-      await saveMedia(id, foto.base64, foto.contentType || "image/jpeg");
+      await saveMedia(id, foto.base64, foto.contentType || "image/jpeg", auth.empresaId);
       registro.fotos.push(id);
     }
     if (video && video.base64) {
       const id = crypto.randomUUID();
-      await saveMedia(id, video.base64, video.contentType || "video/mp4");
+      await saveMedia(id, video.base64, video.contentType || "video/mp4", auth.empresaId);
       registro.video = id;
     }
 
@@ -69,14 +69,14 @@ exports.handler = async (event) => {
     puntoObj.registros = [registro, ...(puntoObj.registros || [])];
 
     if (registro.responsableId) {
-      const responsable = findUsuario(data, registro.responsableId);
+      const responsable = findUsuarioForEmpresa(data, registro.responsableId, auth.empresaId);
       addEvento(data, {
         proyectoId, tipo: "asignacion", puntoId: puntoObj.id, puntoNombre: puntoObj.nombre,
         responsableId: registro.responsableId, responsableNombre: responsable ? responsable.nombre : null
       });
     }
     if (registro.estatus === "listo") {
-      const responsable = registro.responsableId ? findUsuario(data, registro.responsableId) : null;
+      const responsable = registro.responsableId ? findUsuarioForEmpresa(data, registro.responsableId, auth.empresaId) : null;
       addEvento(data, {
         proyectoId, tipo: "completado", puntoId: puntoObj.id, puntoNombre: puntoObj.nombre,
         responsableId: registro.responsableId, responsableNombre: responsable ? responsable.nombre : null

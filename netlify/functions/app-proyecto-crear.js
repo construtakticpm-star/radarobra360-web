@@ -1,8 +1,8 @@
 const { checkAuth } = require("./lib/auth");
-const { getData, saveData, slugify } = require("./lib/store");
+const { saveData, slugify } = require("./lib/store");
 
 exports.handler = async (event) => {
-  const auth = checkAuth(event);
+  const auth = await checkAuth(event);
   if (!auth.ok) return auth.response;
 
   if (event.httpMethod !== "POST") {
@@ -22,7 +22,7 @@ exports.handler = async (event) => {
   }
 
   try {
-    const data = await getData();
+    const data = auth.data;
     const base = slugify(nombre);
     let id = base;
     let n = 2;
@@ -30,7 +30,7 @@ exports.handler = async (event) => {
       id = base + "-" + n;
       n++;
     }
-    data.proyectos.push({ id, nombre, puntos: [], plano: null });
+    data.proyectos.push({ id, nombre, empresaId: auth.empresaId, puntos: [], plano: null });
     await saveData(data);
     return { statusCode: 200, headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ok: true, id }) };
   } catch (e) {

@@ -1,10 +1,10 @@
 const { checkAuth } = require("./lib/auth");
-const { getData, saveData, findProyecto } = require("./lib/store");
+const { saveData, findProyectoForEmpresa } = require("./lib/store");
 
 const HORA_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
 
 exports.handler = async (event) => {
-  const auth = checkAuth(event);
+  const auth = await checkAuth(event);
   if (!auth.ok) return auth.response;
 
   if (event.httpMethod !== "POST") {
@@ -24,8 +24,8 @@ exports.handler = async (event) => {
   }
 
   try {
-    const data = await getData();
-    const proyecto = findProyecto(data, proyectoId);
+    const data = auth.data;
+    const proyecto = findProyectoForEmpresa(data, proyectoId, auth.empresaId);
     if (!proyecto) {
       return { statusCode: 404, headers: { "Content-Type": "application/json" }, body: JSON.stringify({ error: "Proyecto no encontrado" }) };
     }

@@ -97,6 +97,21 @@
   to = "/.netlify/functions/app-informe-responsable"
   status = 200
 
+[[redirects]]
+  from = "/login"
+  to = "/.netlify/functions/app-login"
+  status = 200
+
+[[redirects]]
+  from = "/logout"
+  to = "/.netlify/functions/app-logout"
+  status = 200
+
+[[redirects]]
+  from = "/admin/empresas"
+  to = "/.netlify/functions/app-admin-empresas"
+  status = 200
+
 # Block direct static access to function source.
 [[redirects]]
   from = "/netlify/*"

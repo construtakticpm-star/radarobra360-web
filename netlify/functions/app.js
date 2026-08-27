@@ -1,5 +1,5 @@
 const { checkAuth } = require("./lib/auth");
-const { getData, findProyecto } = require("./lib/store");
+const { findProyectoForEmpresa, empresaProyectos } = require("./lib/store");
 const { esc, shell, topbar } = require("./lib/ui");
 
 function contarFotos(puntos) {
@@ -7,8 +7,8 @@ function contarFotos(puntos) {
     sum + (p.registros || []).reduce((s, r) => s + (r.fotos ? r.fotos.length : 0), 0), 0);
 }
 
-function renderSelectorProyectos(data) {
-  const proyectosHtml = data.proyectos.map(p => {
+function renderSelectorProyectos(proyectos) {
+  const proyectosHtml = proyectos.map(p => {
     const puntos = p.puntos || [];
     const totalFotos = contarFotos(puntos);
     const thumb = p.plano
@@ -30,7 +30,7 @@ function renderSelectorProyectos(data) {
       <p class="eyebrow">Tus proyectos</p>
       <h1>Proyectos / obras</h1>
       <p class="lead">Cada proyecto tiene su propio plano y sus propios puntos de seguimiento.</p>
-      ${data.proyectos.length
+      ${proyectos.length
         ? `<div class="punto-grid">${proyectosHtml}</div>`
         : `<div class="empty">Todavía no hay ningún proyecto. Crea el primero abajo.</div>`
       }
@@ -82,17 +82,17 @@ function renderSelectorProyectos(data) {
 }
 
 exports.handler = async (event) => {
-  const auth = checkAuth(event);
+  const auth = await checkAuth(event, { redirect: true });
   if (!auth.ok) return auth.response;
+  const data = auth.data;
 
-  const data = await getData();
   const proyectoId = event.queryStringParameters && event.queryStringParameters.proyecto;
 
   if (!proyectoId) {
-    return renderSelectorProyectos(data);
+    return renderSelectorProyectos(empresaProyectos(data, auth.empresaId));
   }
 
-  const proyecto = findProyecto(data, proyectoId);
+  const proyecto = findProyectoForEmpresa(data, proyectoId, auth.empresaId);
   if (!proyecto) {
     return {
       statusCode: 404,

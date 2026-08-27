@@ -325,6 +325,7 @@ function topbar(proyectoId, proyectoNombre) {
       ${actions}
       <a href="/app/usuarios" class="btn btn--ghost">👥 Usuarios</a>
       <a href="/app/contacto" class="btn btn--ghost">📨 Contacto</a>
+      <a href="/logout" class="btn btn--ghost">🚪 Salir</a>
     </div>
   </header>`;
 }

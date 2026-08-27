@@ -1,11 +1,11 @@
 const { checkAuth } = require("./lib/auth");
-const { getData, saveData, findProyecto, findUsuario } = require("./lib/store");
+const { saveData, findProyectoForEmpresa, findUsuarioForEmpresa } = require("./lib/store");
 const { addEvento } = require("./lib/eventos");
 
 const ESTATUS_VALIDOS = ["pendiente", "en-proceso", "listo"];
 
 exports.handler = async (event) => {
-  const auth = checkAuth(event);
+  const auth = await checkAuth(event);
   if (!auth.ok) return auth.response;
 
   if (event.httpMethod !== "POST") {
@@ -25,8 +25,8 @@ exports.handler = async (event) => {
   }
 
   try {
-    const data = await getData();
-    const proyecto = findProyecto(data, proyectoId);
+    const data = auth.data;
+    const proyecto = findProyectoForEmpresa(data, proyectoId, auth.empresaId);
     if (!proyecto) {
       return { statusCode: 404, headers: { "Content-Type": "application/json" }, body: JSON.stringify({ error: "Proyecto no encontrado" }) };
     }
@@ -53,14 +53,14 @@ exports.handler = async (event) => {
     registro.responsableId = nuevoResponsableId;
 
     if (nuevoResponsableId && nuevoResponsableId !== prevResponsableId) {
-      const responsable = findUsuario(data, nuevoResponsableId);
+      const responsable = findUsuarioForEmpresa(data, nuevoResponsableId, auth.empresaId);
       addEvento(data, {
         proyectoId, tipo: "asignacion", puntoId: punto.id, puntoNombre: punto.nombre,
         responsableId: nuevoResponsableId, responsableNombre: responsable ? responsable.nombre : null
       });
     }
     if (estatus === "listo" && prevEstatus !== "listo") {
-      const responsable = nuevoResponsableId ? findUsuario(data, nuevoResponsableId) : null;
+      const responsable = nuevoResponsableId ? findUsuarioForEmpresa(data, nuevoResponsableId, auth.empresaId) : null;
       addEvento(data, {
         proyectoId, tipo: "completado", puntoId: punto.id, puntoNombre: punto.nombre,
         responsableId: nuevoResponsableId, responsableNombre: responsable ? responsable.nombre : null

@@ -1,9 +1,9 @@
 const crypto = require("crypto");
 const { checkAuth } = require("./lib/auth");
-const { getData, saveData, saveMedia, findProyecto } = require("./lib/store");
+const { saveData, saveMedia, findProyectoForEmpresa } = require("./lib/store");
 
 exports.handler = async (event) => {
-  const auth = checkAuth(event);
+  const auth = await checkAuth(event);
   if (!auth.ok) return auth.response;
 
   if (event.httpMethod !== "POST") {
@@ -23,14 +23,14 @@ exports.handler = async (event) => {
   }
 
   try {
-    const data = await getData();
-    const proyecto = findProyecto(data, proyectoId);
+    const data = auth.data;
+    const proyecto = findProyectoForEmpresa(data, proyectoId, auth.empresaId);
     if (!proyecto) {
       return { statusCode: 404, headers: { "Content-Type": "application/json" }, body: JSON.stringify({ error: "Proyecto no encontrado" }) };
     }
 
     const id = crypto.randomUUID();
-    await saveMedia(id, base64, contentType || "image/jpeg");
+    await saveMedia(id, base64, contentType || "image/jpeg", auth.empresaId);
     proyecto.plano = { mediaId: id };
     await saveData(data);
   } catch (e) {

@@ -1,15 +1,15 @@
 const { checkAuth } = require("./lib/auth");
-const { getData, findProyecto } = require("./lib/store");
+const { findProyectoForEmpresa, empresaUsuarios } = require("./lib/store");
 const { esc, shell, topbar, lightboxMarkup, lightboxScript } = require("./lib/ui");
 const { resumenHoy } = require("./lib/eventos");
 
 exports.handler = async (event) => {
-  const auth = checkAuth(event);
+  const auth = await checkAuth(event, { redirect: true });
   if (!auth.ok) return auth.response;
+  const data = auth.data;
 
   const proyectoId = event.queryStringParameters && event.queryStringParameters.proyecto;
-  const data = await getData();
-  const proyecto = findProyecto(data, proyectoId);
+  const proyecto = findProyectoForEmpresa(data, proyectoId, auth.empresaId);
 
   if (!proyecto) {
     return {
@@ -100,7 +100,7 @@ exports.handler = async (event) => {
   });
   const placed = puntos.filter(p => p.x != null && p.y != null);
   const unplaced = puntos.filter(p => p.x == null || p.y == null);
-  const usuarios = data.usuarios || [];
+  const usuarios = empresaUsuarios(data, auth.empresaId);
   const horaCierre = proyecto.horaCierre || "18:00";
   const hoy = resumenHoy(data, proyecto, proyectoId);
 

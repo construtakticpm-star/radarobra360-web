@@ -1,9 +1,9 @@
 const crypto = require("crypto");
 const { checkAuth } = require("./lib/auth");
-const { getData, saveData } = require("./lib/store");
+const { saveData } = require("./lib/store");
 
 exports.handler = async (event) => {
-  const auth = checkAuth(event);
+  const auth = await checkAuth(event);
   if (!auth.ok) return auth.response;
 
   if (event.httpMethod !== "POST") {
@@ -24,12 +24,13 @@ exports.handler = async (event) => {
   }
 
   try {
-    const data = await getData();
+    const data = auth.data;
     data.sugerencias = data.sugerencias || [];
     data.sugerencias.unshift({
       id: crypto.randomUUID(),
       nombre,
       mensaje,
+      empresaId: auth.empresaId,
       fecha: new Date().toISOString().slice(0, 10)
     });
     await saveData(data);

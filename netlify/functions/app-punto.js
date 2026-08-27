@@ -1,5 +1,5 @@
 const { checkAuth } = require("./lib/auth");
-const { getData, findProyecto } = require("./lib/store");
+const { findProyectoForEmpresa, empresaUsuarios } = require("./lib/store");
 const { esc, shell, topbar, lightboxMarkup, lightboxScript } = require("./lib/ui");
 
 const ESTATUS_LABELS = { pendiente: "Pendiente", "en-proceso": "En proceso", listo: "Listo" };
@@ -37,13 +37,13 @@ function renderMedia(reg) {
 }
 
 exports.handler = async (event) => {
-  const auth = checkAuth(event);
+  const auth = await checkAuth(event, { redirect: true });
   if (!auth.ok) return auth.response;
+  const data = auth.data;
 
   const params = event.queryStringParameters || {};
   const proyectoId = params.proyecto;
-  const data = await getData();
-  const proyecto = findProyecto(data, proyectoId);
+  const proyecto = findProyectoForEmpresa(data, proyectoId, auth.empresaId);
 
   if (!proyecto) {
     return {
@@ -63,7 +63,7 @@ exports.handler = async (event) => {
     };
   }
 
-  const usuarios = data.usuarios || [];
+  const usuarios = empresaUsuarios(data, auth.empresaId);
   const registros = punto.registros || [];
   const registrosHtml = registros.length
     ? registros.map((r, idx) => {

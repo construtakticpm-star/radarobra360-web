@@ -2,7 +2,7 @@ const { checkAuth } = require("./lib/auth");
 const { getMedia } = require("./lib/store");
 
 exports.handler = async (event) => {
-  const auth = checkAuth(event, "RadarObra360 — media");
+  const auth = await checkAuth(event);
   if (!auth.ok) return auth.response;
 
   const id = event.queryStringParameters && event.queryStringParameters.id;
@@ -17,6 +17,12 @@ exports.handler = async (event) => {
     return { statusCode: 503, body: "Almacenamiento no disponible." };
   }
   if (!media) {
+    return { statusCode: 404, body: "No encontrado" };
+  }
+  // Los archivos guardados antes del modelo multiempresa no traen
+  // empresaId — se dejan pasar (son de la empresa "puente" migrada) en vez
+  // de romper fotos ya subidas; los nuevos SIEMPRE llevan su dueño.
+  if (media.empresaId && media.empresaId !== auth.empresaId) {
     return { statusCode: 404, body: "No encontrado" };
   }
 

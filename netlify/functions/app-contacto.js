@@ -1,13 +1,12 @@
 const { checkAuth } = require("./lib/auth");
-const { getData } = require("./lib/store");
+const { empresaSugerencias } = require("./lib/store");
 const { esc, shell, topbar } = require("./lib/ui");
 
 exports.handler = async (event) => {
-  const auth = checkAuth(event);
+  const auth = await checkAuth(event, { redirect: true });
   if (!auth.ok) return auth.response;
 
-  const data = await getData();
-  const sugerencias = data.sugerencias || [];
+  const sugerencias = empresaSugerencias(auth.data, auth.empresaId);
 
   const listaHtml = sugerencias.length
     ? sugerencias.map(s => `

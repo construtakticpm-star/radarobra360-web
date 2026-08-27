@@ -1,18 +1,18 @@
 const { checkAuth } = require("./lib/auth");
-const { getData, findProyecto, findUsuario } = require("./lib/store");
+const { findProyectoForEmpresa, findUsuarioForEmpresa } = require("./lib/store");
 const { esc, shell, topbar } = require("./lib/ui");
 
 const ESTATUS_LABELS = { pendiente: "Pendiente", "en-proceso": "En proceso", listo: "Listo" };
 
 exports.handler = async (event) => {
-  const auth = checkAuth(event);
+  const auth = await checkAuth(event, { redirect: true });
   if (!auth.ok) return auth.response;
+  const data = auth.data;
 
   const params = event.queryStringParameters || {};
   const proyectoId = params.proyecto;
   const responsableId = params.responsable;
-  const data = await getData();
-  const proyecto = findProyecto(data, proyectoId);
+  const proyecto = findProyectoForEmpresa(data, proyectoId, auth.empresaId);
 
   if (!proyecto) {
     return {
@@ -22,7 +22,7 @@ exports.handler = async (event) => {
     };
   }
 
-  const responsable = findUsuario(data, responsableId);
+  const responsable = findUsuarioForEmpresa(data, responsableId, auth.empresaId);
   if (!responsable) {
     return {
       statusCode: 404,

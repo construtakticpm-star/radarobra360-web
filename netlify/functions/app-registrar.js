@@ -1,15 +1,15 @@
 const { checkAuth } = require("./lib/auth");
-const { getData, findProyecto } = require("./lib/store");
+const { findProyectoForEmpresa, empresaUsuarios } = require("./lib/store");
 const { esc, shell, topbar } = require("./lib/ui");
 
 exports.handler = async (event) => {
-  const auth = checkAuth(event, "RadarObra360 — registrar");
+  const auth = await checkAuth(event, { redirect: true });
   if (!auth.ok) return auth.response;
+  const data = auth.data;
 
   const params = event.queryStringParameters || {};
   const proyectoId = params.proyecto;
-  const data = await getData();
-  const proyecto = findProyecto(data, proyectoId);
+  const proyecto = findProyectoForEmpresa(data, proyectoId, auth.empresaId);
 
   if (!proyecto) {
     return {
@@ -22,7 +22,7 @@ exports.handler = async (event) => {
   const puntosOptions = (proyecto.puntos || []).map(p => `<option value="${esc(p.nombre)}">`).join("");
   const today = new Date().toISOString().slice(0, 10);
   const puntoPrefill = params.punto || "";
-  const usuarios = data.usuarios || [];
+  const usuarios = empresaUsuarios(data, auth.empresaId);
   const responsableOptions = usuarios.map(u => `<option value="${esc(u.id)}">${esc(u.nombre)}</option>`).join("");
 
   const body = `

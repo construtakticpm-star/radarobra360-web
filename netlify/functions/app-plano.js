@@ -264,38 +264,43 @@ exports.handler = async (event) => {
       <div class="plano-layout">
         <div class="console">
           <div class="console__top">
-            <p class="eyebrow">Mando de RadarObra360 · ${esc(proyecto.nombre)}</p>
-            <h1>Mando de RadarObra360</h1>
+            <div class="console__top-row">
+              <div class="console__top-text">
+                <p class="eyebrow">Mando de RadarObra360 · ${esc(proyecto.nombre)}</p>
+                <h1>Mando de RadarObra360</h1>
+              </div>
+
+              <div class="console__actions">
+                <div class="console-spinner">
+                  <label>Cierre de jornada</label>
+                  <div class="console-spinner__control">
+                    <button type="button" id="horaCierreDown" aria-label="Restar 30 minutos">▼</button>
+                    <span class="console-spinner__value" id="horaCierreDisplay">${esc(horaCierre)}</span>
+                    <button type="button" id="horaCierreUp" aria-label="Sumar 30 minutos">▲</button>
+                  </div>
+                  <button type="button" class="console-quickstart" id="horaCierreSaveBtn">Set</button>
+                </div>
+
+                <div class="report-menu" id="informeMenu">
+                  <button type="button" class="console-quickstart" id="informeMenuBtn">📄 Emitir Reporte</button>
+                  <div class="report-menu__dropdown report-menu__dropdown--form" id="informeMenuDropdown">
+                    <label for="informeResponsable" class="report-menu__label">Responsable asignado</label>
+                    <select id="informeResponsable">
+                      ${usuarios.map(u => `<option value="${esc(u.id)}">${esc(u.nombre)}</option>`).join("")}
+                    </select>
+                    ${usuarios.length ? "" : `<p class="hint" style="margin:6px 0;">Todavía no hay usuarios cargados.</p>`}
+                    <button type="button" class="btn btn--primary btn--small" id="informeGenerarBtn" ${usuarios.length ? "" : "disabled"}>Generar informe (PDF)</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <p class="lead">Click en un pin para ver sus fotos y video sin salir del plano. Los frentes en estatus "Listo" se quitan de esta vista automáticamente.</p>
             <div class="console__leds">
               <div class="console-led"><span class="console-led__label">Puntos</span><span class="console-led__value">${placed.length}</span></div>
               <div class="console-led"><span class="console-led__label">Sin ubicar</span><span class="console-led__value">${unplaced.length}</span></div>
               <div class="console-led"><span class="console-led__label">Alertas</span><span class="console-led__value">${hoy.alertas.length}</span></div>
               <div class="console-led"><span class="console-led__label">Cierre</span><span class="console-led__value" id="ledCierre">${esc(horaCierre)}</span></div>
-            </div>
-
-            <div class="console__actions">
-              <div class="console-spinner">
-                <label>Cierre de jornada</label>
-                <div class="console-spinner__control">
-                  <button type="button" id="horaCierreDown" aria-label="Restar 30 minutos">▼</button>
-                  <span class="console-spinner__value" id="horaCierreDisplay">${esc(horaCierre)}</span>
-                  <button type="button" id="horaCierreUp" aria-label="Sumar 30 minutos">▲</button>
-                </div>
-                <button type="button" class="console-quickstart" id="horaCierreSaveBtn">Guardar</button>
-              </div>
-
-              <div class="report-menu" id="informeMenu">
-                <button type="button" class="console-quickstart" id="informeMenuBtn">📄 Enviar informe</button>
-                <div class="report-menu__dropdown report-menu__dropdown--form" id="informeMenuDropdown">
-                  <label for="informeResponsable" class="report-menu__label">Responsable asignado</label>
-                  <select id="informeResponsable">
-                    ${usuarios.map(u => `<option value="${esc(u.id)}">${esc(u.nombre)}</option>`).join("")}
-                  </select>
-                  ${usuarios.length ? "" : `<p class="hint" style="margin:6px 0;">Todavía no hay usuarios cargados.</p>`}
-                  <button type="button" class="btn btn--primary btn--small" id="informeGenerarBtn" ${usuarios.length ? "" : "disabled"}>Generar informe (PDF)</button>
-                </div>
-              </div>
             </div>
           </div>
 

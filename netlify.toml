@@ -93,6 +93,11 @@
   status = 200
 
 [[redirects]]
+  from = "/app/plano-alerta"
+  to = "/.netlify/functions/app-plano-alerta"
+  status = 200
+
+[[redirects]]
   from = "/app/informe-responsable"
   to = "/.netlify/functions/app-informe-responsable"
   status = 200

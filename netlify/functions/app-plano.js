@@ -104,6 +104,20 @@ exports.handler = async (event) => {
   const horaCierre = proyecto.horaCierre || "18:00";
   const hoy = resumenHoy(data, proyecto, proyectoId);
 
+  // Alerta de radar: bandera compartida (no localStorage) para que se vea
+  // igual en cualquier sesión que abra este proyecto mientras esté activa.
+  const alertaRadarActiva = !!proyecto.alertaRadar;
+  const alertaRadarMinutos = alertaRadarActiva
+    ? Math.max(0, Math.floor((Date.now() - new Date(proyecto.alertaRadar.activadaEn).getTime()) / 60000))
+    : 0;
+  const radarAlertBannerHtml = alertaRadarActiva
+    ? `<div class="radar-alert-banner" id="radarAlertBanner">
+        <span class="radar-alert-banner__icon">🚨</span>
+        <span class="radar-alert-banner__text">ALERTA DE RADAR ACTIVA — TODOS A REVISAR LA OBRA</span>
+        <span class="radar-alert-banner__meta" id="radarAlertMeta">hace ${alertaRadarMinutos} min</span>
+      </div>`
+    : "";
+
   // El pin se pinta según si el frente tiene responsable asignado en su
   // registro más reciente, no según su estatus.
   function asignadoDe(p) {
@@ -231,15 +245,19 @@ exports.handler = async (event) => {
     : "";
   const hoyFeed = [
     ...hoy.asignaciones.map(e => ({ ...e, kind: "asignacion" })),
-    ...hoy.completados.map(e => ({ ...e, kind: "completado" }))
+    ...hoy.completados.map(e => ({ ...e, kind: "completado" })),
+    ...hoy.alertasRadar.map(e => ({ ...e, kind: "alerta_radar" }))
   ].sort((a, b) => b.timestamp.localeCompare(a.timestamp));
   const hoyChatHtml = hoyFeed.length
     ? hoyFeed.map(e => {
-        const icon = e.kind === "asignacion" ? "🧷" : "✅";
+        const icon = e.kind === "asignacion" ? "🧷" : e.kind === "completado" ? "✅" : "🚨";
         const texto = e.kind === "asignacion"
           ? `<strong>${esc(e.puntoNombre)}</strong> se ha asignado a <strong>${esc(e.responsableNombre || "—")}</strong>`
-          : `<strong>${esc(e.responsableNombre || "Sin asignar")}</strong> marcó Listo a <strong>${esc(e.puntoNombre)}</strong>`;
-        return `<div class="hoy-chat__msg"><span class="hoy-chat__icon">${icon}</span><div class="hoy-chat__bubble">${texto}<span class="hoy-chat__time">${esc(e.hora)}</span></div></div>`;
+          : e.kind === "completado"
+          ? `<strong>${esc(e.responsableNombre || "Sin asignar")}</strong> marcó Listo a <strong>${esc(e.puntoNombre)}</strong>`
+          : `Se activó la <strong>alerta de radar</strong> — a todos a revisar la obra`;
+        const claseExtra = e.kind === "alerta_radar" ? " hoy-chat__msg--alerta" : "";
+        return `<div class="hoy-chat__msg${claseExtra}"><span class="hoy-chat__icon">${icon}</span><div class="hoy-chat__bubble">${texto}<span class="hoy-chat__time">${esc(e.hora)}</span></div></div>`;
       }).join("")
     : `<p class="hint" style="padding:4px 2px;">Sin movimientos todavía hoy.</p>`;
   // Panel único: "Hoy" (feed de asignaciones/completados + alertas) y
@@ -261,6 +279,7 @@ exports.handler = async (event) => {
   const body = `
     ${topbar(proyectoId, proyecto.nombre)}
     <div class="wrap wrap--wide">
+      <div id="radarAlertBannerSlot">${radarAlertBannerHtml}</div>
       ${eventosPanelHtml}
 
       <div class="plano-layout">
@@ -320,6 +339,7 @@ exports.handler = async (event) => {
               <div class="plano-stage" id="stage">
                 <img src="/app/media?id=${esc(proyecto.plano.mediaId)}" alt="Plano de obra" id="planoImg">
                 ${pinsHtml}
+                <div class="radar-sweep" aria-hidden="true"><span></span><span></span><span></span></div>
               </div>
               <span class="hint" id="placeHint"></span>
 
@@ -560,13 +580,44 @@ exports.handler = async (event) => {
         setPlanoOculto(!planoOculto());
         refreshToggles();
       });
-      radarModeBtn.addEventListener('click', () => {
+
+      // La alerta de radar es una bandera del PROYECTO (no de este
+      // navegador): al activarla, cualquiera que abra este plano la ve,
+      // hasta que alguien la apague. El resto del modo radar (ocultar
+      // plano, parpadeos) sigue siendo una preferencia local de cada quien.
+      const radarAlertSlot = document.getElementById('radarAlertBannerSlot');
+      function radarAlertBannerHtml(minutos) {
+        return '<div class="radar-alert-banner" id="radarAlertBanner">'
+          + '<span class="radar-alert-banner__icon">🚨</span>'
+          + '<span class="radar-alert-banner__text">ALERTA DE RADAR ACTIVA — TODOS A REVISAR LA OBRA</span>'
+          + '<span class="radar-alert-banner__meta">hace ' + minutos + ' min</span>'
+          + '</div>';
+      }
+
+      radarModeBtn.addEventListener('click', async () => {
         const turnOn = !(planoOculto() && !signalDisabled());
         setPlanoOculto(turnOn);
         setSignalDisabled(!turnOn);
+        stage.classList.toggle('radar-pulse', turnOn);
         refreshToggles();
+
+        radarAlertSlot.innerHTML = turnOn ? radarAlertBannerHtml(0) : '';
+        radarModeBtn.disabled = true;
+        try {
+          await fetch('/app/plano-alerta', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ proyectoId: PROYECTO_ID, activar: turnOn })
+          });
+        } catch (e) {
+          // Sin conexión: el modo radar local ya cambió, la alerta compartida
+          // se reintentará sola la próxima vez que alguien recargue el plano.
+        } finally {
+          radarModeBtn.disabled = false;
+        }
       });
       refreshToggles();
+      stage.classList.toggle('radar-pulse', planoOculto() && !signalDisabled());
 
       // 0 = recién empezó el día, sin prisa. 1 = ya se llegó (o pasó) la
       // hora de cierre. Con eso se interpola duración/color del pulso.

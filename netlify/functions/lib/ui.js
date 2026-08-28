@@ -68,6 +68,37 @@ p.lead{color:var(--muted);margin-bottom:28px;border-left:3px solid var(--border)
 .alert-banner-list{display:flex;flex-direction:column;gap:8px;}
 .alert-banner{background:#fdeceb;border:1px solid #e8a89e;color:#a13a2e;border-radius:10px;padding:10px 14px;font-size:0.85rem;}
 .alert-banner__meta{color:#8a6b0f;font-weight:600;}
+
+/* ---------- alerta de radar: aviso tipo "llamado a la acción" de HUD de
+   videojuego, visible para cualquiera que abra el plano mientras esté
+   activa (bandera del proyecto, no de este navegador) ---------- */
+.radar-alert-banner{
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  margin-bottom:20px;padding:14px 20px;border-radius:12px;
+  background:linear-gradient(100deg,#7c1d13,#c0392b 45%,#7c1d13);
+  background-size:220% 100%;
+  border:1px solid rgba(255,255,255,0.25);
+  box-shadow:0 4px 0 rgba(0,0,0,0.25),0 0 24px rgba(192,57,43,0.55);
+  animation:radar-alert-glow 1.4s ease-in-out infinite,radar-alert-sheen 3.2s linear infinite;
+}
+.radar-alert-banner__icon{font-size:1.3rem;line-height:1;}
+.radar-alert-banner__text{
+  font-family:var(--font-hud);font-weight:800;font-size:0.86rem;letter-spacing:0.04em;
+  color:#fff;text-shadow:0 1px 2px rgba(0,0,0,0.4);flex:1 1 auto;
+}
+.radar-alert-banner__meta{
+  font-family:var(--font-hud);font-size:0.68rem;font-weight:700;color:rgba(255,255,255,0.8);
+  white-space:nowrap;letter-spacing:0.03em;
+}
+@keyframes radar-alert-glow{
+  0%,100%{box-shadow:0 4px 0 rgba(0,0,0,0.25),0 0 18px rgba(192,57,43,0.5);}
+  50%{box-shadow:0 4px 0 rgba(0,0,0,0.25),0 0 34px rgba(255,90,70,0.85);}
+}
+@keyframes radar-alert-sheen{0%{background-position:0% 0;}100%{background-position:220% 0;}}
+@media (prefers-reduced-motion:reduce){.radar-alert-banner{animation:none;}}
+
+.hoy-chat__msg--alerta .hoy-chat__icon{background:var(--danger);}
+.hoy-chat__msg--alerta .hoy-chat__bubble{background:#fdeceb;color:#7c1d13;font-weight:600;}
 /* ---------- panel único "Hoy" + "Próximos eventos" (sin ubicar), arriba
    del radar para que el plano quede libre de usar todo el ancho ---------- */
 .eventos-panel{margin-bottom:24px;display:flex;gap:26px;align-items:flex-start;}
@@ -209,6 +240,11 @@ textarea{resize:vertical;}
 .console-btn--stop{background:radial-gradient(circle at 35% 30%,#e05b4a,var(--danger));border-color:#8f2c20;color:#fff;}
 .console-btn.is-active{outline:3px solid var(--amber);outline-offset:2px;}
 .console-btn.is-off{opacity:0.42;}
+#radarModeBtn.is-active{
+  background:radial-gradient(circle at 35% 30%,#3ddc72,#1f9c4a);
+  border-color:#12692f;color:#04140a;outline:none;
+  box-shadow:0 3px 0 rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.3),0 0 16px rgba(61,220,114,0.65);
+}
 
 .console__actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center;flex-shrink:0;}
 .console-spinner{display:flex;align-items:center;gap:10px;}
@@ -257,6 +293,28 @@ textarea{resize:vertical;}
   animation:pin-signal 3.2s ease-out infinite;pointer-events:none;
 }
 @keyframes pin-signal{0%{transform:scale(1);opacity:0.75;}100%{transform:scale(3.4);opacity:0;}}
+
+.radar-sweep{
+  position:absolute;top:50%;left:50%;width:1px;height:1px;pointer-events:none;
+  display:none;z-index:1;
+}
+.plano-stage.radar-pulse .radar-sweep{display:block;}
+.radar-sweep span{
+  position:absolute;top:0;left:0;border-radius:50%;
+  border:2px solid rgba(61,220,114,0.85);
+  width:20px;height:20px;margin:-10px 0 0 -10px;
+  animation:radar-sweep-ring 2.6s cubic-bezier(.2,.6,.4,1) infinite;
+  box-shadow:0 0 12px rgba(61,220,114,0.5);
+}
+.radar-sweep span:nth-child(2){animation-delay:.87s;}
+.radar-sweep span:nth-child(3){animation-delay:1.74s;}
+@keyframes radar-sweep-ring{
+  0%{width:20px;height:20px;margin:-10px 0 0 -10px;opacity:0.9;border-width:3px;}
+  100%{width:340px;height:340px;margin:-170px 0 0 -170px;opacity:0;border-width:1px;}
+}
+@media (prefers-reduced-motion:reduce){
+  .radar-sweep span{animation:none;display:none;}
+}
 .plano-stage.signal-off .pin__ping{display:none;}
 .pin__label{
   margin-top:2px;background:rgba(13,22,34,0.85);color:#fff;font-size:0.68rem;font-weight:700;
@@ -329,7 +387,7 @@ textarea{resize:vertical;}
 
 @media print{
   body,body.radar-bg{background:#fff;}
-  .topbar,.console__leds,.console__rail,.console__actions,.page-actions,.lightbox,#stage,#placeHint,#replaceInput,.plano-detail__actions,.tag-add,.week-bars,.media-item__delete,.media-item__share,.registro__notify,.registro__edit,.registro__edit-toggle,.informe-actions,.eventos-panel{display:none !important;}
+  .topbar,.console__leds,.console__rail,.console__actions,.page-actions,.lightbox,#stage,#placeHint,#replaceInput,.plano-detail__actions,.tag-add,.week-bars,.media-item__delete,.media-item__share,.registro__notify,.registro__edit,.registro__edit-toggle,.informe-actions,.eventos-panel,.radar-alert-banner{display:none !important;}
   .console{background:none;border:none;box-shadow:none;padding:0;}
   .console__top h1,.console__top .eyebrow{color:var(--navy);border-bottom-color:var(--border);}
   .console__top p.lead{color:var(--muted);}

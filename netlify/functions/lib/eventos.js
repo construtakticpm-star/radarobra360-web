@@ -31,6 +31,7 @@ function resumenHoy(data, proyecto, proyectoId) {
   const eventosHoy = (data.eventos || []).filter(e => e.proyectoId === proyectoId && e.fecha === hoy);
   const asignaciones = eventosHoy.filter(e => e.tipo === "asignacion").sort((a, b) => b.timestamp.localeCompare(a.timestamp));
   const completados = eventosHoy.filter(e => e.tipo === "completado").sort((a, b) => b.timestamp.localeCompare(a.timestamp));
+  const alertasRadar = eventosHoy.filter(e => e.tipo === "alerta_radar").sort((a, b) => b.timestamp.localeCompare(a.timestamp));
 
   const ahora = Date.now();
   const alertas = (proyecto.puntos || [])
@@ -43,7 +44,7 @@ function resumenHoy(data, proyecto, proyectoId) {
     })
     .filter(x => !x.asignado && x.horas * 60 * 60 * 1000 >= CUATRO_HORAS_MS);
 
-  return { hoy, asignaciones, completados, alertas };
+  return { hoy, asignaciones, completados, alertasRadar, alertas };
 }
 
 module.exports = { addEvento, resumenHoy };

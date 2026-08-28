@@ -357,7 +357,6 @@ exports.handler = async (event) => {
               </div>
               <div class="console-group">
                 <p class="console-group__label">Radar</p>
-                <button type="button" class="console-btn" id="signalToggleBtn" title="Señal"><span class="console-btn__icon">🛰️</span><span class="console-btn__label">Señal</span></button>
                 <button type="button" class="console-btn" id="radarModeBtn" title="Modo radar"><span class="console-btn__icon">📡</span><span class="console-btn__label">Radar</span></button>
               </div>
               <div class="console-group">
@@ -395,7 +394,6 @@ exports.handler = async (event) => {
       const replaceInput = document.getElementById('replaceInput');
       const replaceStatus = document.getElementById('replaceStatus');
       const planoToggleBtn = document.getElementById('planoToggleBtn');
-      const signalToggleBtn = document.getElementById('signalToggleBtn');
       const radarModeBtn = document.getElementById('radarModeBtn');
       const horaCierreDisplay = document.getElementById('horaCierreDisplay');
       const horaCierreDown = document.getElementById('horaCierreDown');
@@ -540,10 +538,8 @@ exports.handler = async (event) => {
         localStorage.setItem(PLANO_OCULTO_KEY, oculto ? 'true' : 'false');
       }
 
-      function updateSignalToggleUI() {
-        const off = signalDisabled();
-        signalToggleBtn.classList.toggle('is-off', off);
-        stage.classList.toggle('signal-off', off);
+      function updateSignalStageClass() {
+        stage.classList.toggle('signal-off', signalDisabled());
       }
       function updatePlanoToggleUI() {
         const oculto = planoOculto();
@@ -555,15 +551,11 @@ exports.handler = async (event) => {
         radarModeBtn.classList.toggle('is-active', on);
       }
       function refreshToggles() {
-        updateSignalToggleUI();
+        updateSignalStageClass();
         updatePlanoToggleUI();
         updateRadarModeUI();
       }
 
-      signalToggleBtn.addEventListener('click', () => {
-        setSignalDisabled(!signalDisabled());
-        refreshToggles();
-      });
       planoToggleBtn.addEventListener('click', () => {
         setPlanoOculto(!planoOculto());
         refreshToggles();

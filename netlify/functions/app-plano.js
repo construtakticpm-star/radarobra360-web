@@ -594,11 +594,29 @@ exports.handler = async (event) => {
           + '</div>';
       }
 
+      // Ping de sonar en loop mientras el radar está activo, sincronizado
+      // con la duración de las ondas visuales (radar-sweep-ring, 2.6s).
+      // Respeta el mismo mute que el resto de sonidos de la consola.
+      let radarPingInterval = null;
+      function setRadarPulse(on) {
+        stage.classList.toggle('radar-pulse', on);
+        if (on) {
+          if (radarPingInterval) return;
+          if (window.playRadarPing) window.playRadarPing();
+          radarPingInterval = setInterval(() => {
+            if (window.playRadarPing) window.playRadarPing();
+          }, 2600);
+        } else if (radarPingInterval) {
+          clearInterval(radarPingInterval);
+          radarPingInterval = null;
+        }
+      }
+
       radarModeBtn.addEventListener('click', async () => {
         const turnOn = !(planoOculto() && !signalDisabled());
         setPlanoOculto(turnOn);
         setSignalDisabled(!turnOn);
-        stage.classList.toggle('radar-pulse', turnOn);
+        setRadarPulse(turnOn);
         refreshToggles();
 
         radarAlertSlot.innerHTML = turnOn ? radarAlertBannerHtml(0) : '';
@@ -617,7 +635,7 @@ exports.handler = async (event) => {
         }
       });
       refreshToggles();
-      stage.classList.toggle('radar-pulse', planoOculto() && !signalDisabled());
+      setRadarPulse(planoOculto() && !signalDisabled());
 
       // 0 = recién empezó el día, sin prisa. 1 = ya se llegó (o pasó) la
       // hora de cierre. Con eso se interpola duración/color del pulso.

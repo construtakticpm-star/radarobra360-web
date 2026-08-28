@@ -501,6 +501,28 @@ function soundScript() {
         } catch (e) {}
       };
 
+      // Ping de sonar (distinto del blip de click): tono largo tipo sonido
+      // de submarino, usado en loop mientras el modo radar está activo.
+      window.playRadarPing = function () {
+        if (isMuted()) return;
+        try {
+          var Ctx = window.AudioContext || window.webkitAudioContext;
+          if (!Ctx) return;
+          var ctx = window.__radarAudioCtx || (window.__radarAudioCtx = new Ctx());
+          var osc = ctx.createOscillator();
+          var gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(880, ctx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(660, ctx.currentTime + 0.4);
+          gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.055, ctx.currentTime + 0.025);
+          gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.45);
+          osc.connect(gain).connect(ctx.destination);
+          osc.start();
+          osc.stop(ctx.currentTime + 0.46);
+        } catch (e) {}
+      };
+
       function updateToggleUI() {
         var muted = isMuted();
         document.querySelectorAll('.audio-toggle').forEach(function (btn) {
